@@ -120,7 +120,7 @@ def load_data(csv_path, year_filter=None):
         sample = f.read(2048)
     sep = ";" if sample.count(";") > sample.count(",") else ","
 
-    df = pd.read_csv(csv_path, sep=sep, skiprows=1, encoding="utf-8-sig", low_memory=False,
+    df = pd.read_csv(csv_path, sep=sep, skiprows=[1], encoding="utf-8-sig", low_memory=False,
                      thousands=".", decimal=",")
 
     print(f"✅  CSV geladen: {len(df)} Zeilen, {len(df.columns)} Spalten")
