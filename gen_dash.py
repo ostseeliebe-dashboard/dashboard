@@ -11,7 +11,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 
-try
+try:
     import openpyxl
     HAS_OPENPYXL = True
 except ImportError:
