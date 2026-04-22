@@ -11,7 +11,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 
-try:
+try
     import openpyxl
     HAS_OPENPYXL = True
 except ImportError:
@@ -22,8 +22,8 @@ except ImportError:
 # ---------------------------------------------------------------------------
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Default paths - can be overridden via command-line args
-DEFAULT_CSV = os.path.expanduser("~/Claude_14.04.2026/buchungen_export_2027.csv")
-DEFAULT_OUT = os.path.expanduser("~/Claude_14.04.2026/ostseeliebe-dashboard.html")
+DEFAULT_CSV = os.path.join(SCRIPT_DIR, "buchungen_export_2027.csv")
+DEFAULT_OUT = os.path.join(SCRIPT_DIR, "index.html")
 
 
 def parse_german_number(s):
