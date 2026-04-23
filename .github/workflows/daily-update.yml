@@ -67,9 +67,7 @@ jobs:
 
       # -- 6. Apartmenthaus-Tab generieren --
       - name: Apartmenthaus-Tab generieren
-        run: python gen_apartmenthaus.py \
-               --csv buchungen_export_2027.csv \
-               --output apartmenthaus_tab.html
+        run: python gen_apartmenthaus.py --csv buchungen_export_2027.csv --output apartmenthaus_tab.html
 
       # -- 7. Passwortschutz anwenden --
       - name: Passwortschutz anwenden (protect_dashboard.py)
