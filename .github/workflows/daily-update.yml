@@ -1,45 +1,45 @@
 # .github/workflows/daily-update.yml
 #
-# Täglich um 06:00 Uhr:
+# Taeglich um 06:00 Uhr:
 #   1. Buchungs-CSV aus Contao herunterladen
 #   2. Dashboard neu generieren (gen_dash.py)
 #   3. Apartmenthaus-Tab neu generieren (gen_apartmenthaus.py)
-#   4. Geänderte HTML-Dateien committen und pushen
+#   4. Geaenderte HTML-Dateien committen und pushen
 #
-# Benötigte GitHub Secrets (Settings → Secrets → Actions):
+# Benoetigte GitHub Secrets (Settings -> Secrets -> Actions):
 #   CONTAO_URL   https://www.ostseeliebe-ferienwohnungen.de
 #   CONTAO_USER  Contao-Benutzername
 #   CONTAO_PASS  Contao-Passwort
 
-name: Tägliches Dashboard-Updat
+name: Taegliches Dashboard-Update
 
 on:
   schedule:
-    - cron: "0 5 * * *"   # täglich 06:00 Uhr MEZ (= 05:00 UTC)
-  workflow_dispatch:        # manueller Start über GitHub-Oberfläche
+    - cron: "0 5 * * *"   # taeglich 06:00 Uhr MEZ (= 05:00 UTC)
+  workflow_dispatch:        # manueller Start ueber GitHub-Oberflaeche
 
 permissions:
-  contents: write           # zum Committen nötig
+  contents: write           # zum Committen noetig
 
 jobs:
   update-dashboard:
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Repo auschecken ──────────────────────────────────────
+      # -- 1. Repo auschecken --
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── 2. Python einrichten ────────────────────────────────────
+      # -- 2. Python einrichten --
       - name: Python 3.11 einrichten
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Abhängigkeiten installieren
-        run: pip install requests pandas openpyxl
+      - name: Abhaengigkeiten installieren
+        run: pip install requests pandas openpyxl beautifulsoup4
 
-      # ── 3. Buchungs-CSV aus Contao laden ────────────────────────
+      # -- 3. Buchungs-CSV aus Contao laden --
       - name: Buchungsdaten aus Contao herunterladen
         env:
           CONTAO_URL:  ${{ secrets.CONTAO_URL }}
@@ -51,31 +51,44 @@ jobs:
             --to $(date -d "+730 days" +%d.%m.%Y) \
             --out buchungen_export_2027.csv
 
-      # ── 4. Dashboard generieren ─────────────────────────────────
+      # -- 4. Objektstammdaten aus Contao laden --
+      - name: Objektstammdaten aus Contao laden
+        env:
+          CONTAO_URL:  ${{ secrets.CONTAO_URL }}
+          CONTAO_USER: ${{ secrets.CONTAO_USER }}
+          CONTAO_PASS: ${{ secrets.CONTAO_PASS }}
+        run: |
+          python fetch_property_data.py --out Objektstammdaten.xlsx
+        continue-on-error: true   # Dashboard funktioniert auch ohne (nur ohne Stammdaten)
+
+      # -- 5. Dashboard generieren --
       - name: Dashboard generieren (gen_dash.py)
         run: python gen_dash.py
 
-      # ── 5. Apartmenthaus-Tab generieren ─────────────────────────
+      # -- 6. Apartmenthaus-Tab generieren --
       - name: Apartmenthaus-Tab generieren
-        run: python gen_apartmenthaus.py --csv buchungen_export_2027.csv --output apartmenthaus_tab.html
+        run: python gen_apartmenthaus.py \
+               --csv buchungen_export_2027.csv \
+               --output apartmenthaus_tab.html
 
-      # ── 6. Passwortschutz anwenden ──────────────────────────────
+      # -- 7. Passwortschutz anwenden --
       - name: Passwortschutz anwenden (protect_dashboard.py)
         run: python protect_dashboard.py
         continue-on-error: true   # falls noch nicht eingerichtet
 
-      # ── 7. Änderungen committen und pushen ──────────────────────
-      - name: Änderungen committen
+      # -- 8. Aenderungen committen und pushen --
+      - name: Aenderungen committen
         run: |
           git config user.name  "Dashboard Bot"
           git config user.email "bot@ostseeliebe-dashboard.github.io"
           git add buchungen_export_2027.csv \
+                  Objektstammdaten.xlsx \
                   apartmenthaus_tab.html \
                   index.html \
                   *.html 2>/dev/null || true
-          # Nur committen wenn es wirklich Änderungen gibt
+          # Nur committen wenn es wirklich Aenderungen gibt
           git diff --cached --quiet || \
-            git commit -m "🔄 Automatisches Update $(date +'%d.%m.%Y %H:%M')"
+            git commit -m "Automatisches Update $(date +'%d.%m.%Y %H:%M')"
 
-      - name: Änderungen pushen
+      - name: Aenderungen pushen
         run: git push
