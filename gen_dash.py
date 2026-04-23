@@ -196,7 +196,11 @@ def read_bookings(csv_path):
 def compute_data(bookings):
     """Compute all aggregated data for the dashboard."""
     # --- Per-year KPIs ---
-    years = sorted(set(b["anreise"].year for b in bookings))
+    current_year = datetime.now().year
+    _all_years = set(b["anreise"].year for b in bookings)
+    _future_years = sorted([y for y in _all_years if y > current_year])
+    _past_years = sorted([y for y in _all_years if y < current_year], reverse=True)
+    years = ([current_year] if current_year in _all_years else []) + _future_years + _past_years
     kpis = {}
     for y in years:
         yb = [b for b in bookings if b["anreise"].year == y]
