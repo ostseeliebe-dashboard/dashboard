@@ -39,8 +39,21 @@ OUT_CSV    = "buchungen_export_2027.csv"   # Ausgabedatei (im Repo-Root)
 
 # Felder die exportiert werden (für Dashboard relevant)
 EXPORT_FIELDS = [
+    # Pflichtfelder
     "objnr", "city", "arrival", "departure", "nights",
     "bookingid", "schannel", "totalrent", "paid", "rent_total",
+    # Gebuehren
+    "touristtax", "shortstay", "provisionfee", "cancelfee",
+    # Leistungskategorien (aktiv)
+    "group_1",   # 01. Endreinigung
+    "group_2",   # 02. Zusatzleistungen (buchbar)
+    "group_23",  # 03. Zusatzleistungen (nur Ostseeliebe)
+    "group_26",  # 04. Zusatzleistungen (provisionsfaehig)
+    "group_6",   # 05. Zusatzleistungen (inklusive)
+    "group_9",   # 06. Nebenkosten (obligatorisch)
+    "group_33",  # 07. Nebenkosten (teilw. Eigentuemer)
+    "group_22",  # 08. Kaution
+    "group_32",  # 09. Divers
 ]
 
 
