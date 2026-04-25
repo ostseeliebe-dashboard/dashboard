@@ -22,8 +22,8 @@ except ImportError:
 # ---------------------------------------------------------------------------
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Default paths - can be overridden via command-line args
-DEFAULT_CSV = os.path.join(SCRIPT_DIR, "buchungen_export_2027.csv")
-DEFAULT_OUT = os.path.join(SCRIPT_DIR, "index.html")
+DEFAULT_CSV = os.path.expanduser("~/Claude_14.04.2026/buchungen_export_2027.csv")
+DEFAULT_OUT = os.path.expanduser("~/Claude_14.04.2026/ostseeliebe-dashboard.html")
 
 
 def parse_german_number(s):
@@ -196,11 +196,7 @@ def read_bookings(csv_path):
 def compute_data(bookings):
     """Compute all aggregated data for the dashboard."""
     # --- Per-year KPIs ---
-    current_year = datetime.now().year
-    _all_years = set(b["anreise"].year for b in bookings)
-    _future_years = sorted([y for y in _all_years if y > current_year])
-    _past_years = sorted([y for y in _all_years if y < current_year], reverse=True)
-    years = ([current_year] if current_year in _all_years else []) + _future_years + _past_years
+    years = sorted(set(b["anreise"].year for b in bookings))
     kpis = {}
     for y in years:
         yb = [b for b in bookings if b["anreise"].year == y]
@@ -623,7 +619,7 @@ def generate_html(data):
                     <div class="kpi-value">{k["buchungen"]}</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">N\u00e4chte</div>
+                    <div class="kpi-label">Nächte</div>
                     <div class="kpi-value">{format_german_number(k["naechte"], 0)}</div>
                 </div>
                 <div class="kpi-card">
@@ -635,7 +631,7 @@ def generate_html(data):
                     <div class="kpi-value">{format_euro(k["miete_gesamt"])}</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Miete Eigent\u00fcmer</div>
+                    <div class="kpi-label">Miete Eigentümer</div>
                     <div class="kpi-value">{format_euro(k["miete_eigentuemer"])}</div>
                 </div>
             </div>
@@ -646,7 +642,7 @@ def generate_html(data):
                             <th>Zusatzkosten</th>
                             <th class="zk-num">Gesamt</th>
                             <th class="zk-num zk-sub">Vermittler</th>
-                            <th class="zk-num zk-sub">Eigent\u00fcmer</th>
+                            <th class="zk-num zk-sub">Eigentümer</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -681,7 +677,7 @@ def generate_html(data):
     zusatz_detail_header = "<tr><th>Kategorie</th><th class='zk-num'>Anzahl</th>"
     for y in years_sorted:
         zusatz_detail_header += f"<th class='zk-num'>{y} Ges.</th><th class='zk-num zk-sub'>{y} Verm.</th><th class='zk-num zk-sub'>{y} Eig.</th>"
-    zusatz_detail_header += "<th class='zk-num'>Gesamt</th><th class='zk-num zk-sub'>Vermittler</th><th class='zk-num zk-sub'>Eigent\u00fcmer</th></tr>"
+    zusatz_detail_header += "<th class='zk-num'>Gesamt</th><th class='zk-num zk-sub'>Vermittler</th><th class='zk-num zk-sub'>Eigentümer</th></tr>"
 
     zusatz_detail_rows = ""
     for z in zusatz_sorted:
@@ -752,7 +748,7 @@ def generate_html(data):
                 <div class="prop-kpi"><div class="pk-label">Miete Vermittler</div><div class="pk-value">{format_euro(mv_total)}</div></div>
                 <div class="prop-kpi"><div class="pk-label">+ Zusatzk. Vermittler</div><div class="pk-value">{format_euro(zk_verm_year)}</div></div>
                 <div class="prop-kpi"><div class="pk-label">Provision gesamt</div><div class="pk-value green">{format_euro(prov_incl_zk)}</div></div>
-                <div class="prop-kpi"><div class="pk-label">\u00d8 Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
+                <div class="prop-kpi"><div class="pk-label">Ø Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
             </div>
             <div style="overflow-x:auto;">
             <table class="prov-table">
@@ -1027,6 +1023,125 @@ def generate_html(data):
     ort_values = json.dumps([o[1] for o in orte])
     ort_colors = json.dumps([colors[i % len(colors)] for i in range(len(orte))])
 
+
+    # ---------------------------------------------------------------------------
+    # Tab layout — THIS is the single place to define and order tabs.
+    # To add a new tab:
+    #   1. Add an entry here: ("your_tab_id", "Tab Label")
+    #   2. Add the matching content block in tab_contents below
+    # The tab navigation and active-state logic are generated automatically.
+    # ---------------------------------------------------------------------------
+    TABS = [
+        ("uebersicht",        "Übersicht"),
+        ("jahresvergleich",   "Jahresvergleich"),
+        ("reiseprofile",      "Reiseprofile"),
+        ("vertriebskanaele",  "Vertriebskanäle"),
+        ("orte",              "Orte"),
+        ("zusatzkosten",      "Zusatzkosten"),
+        ("provisionen",       "Provisionen"),
+        ("unterkunft_detail", "Unterkunft Detail"),
+    ]
+    tab_nav_html = "\n        ".join(
+        '<div class="tab{}" data-tab="{}">{}</div>'.format(
+            " active" if i == 0 else "", tid, tlabel
+        )
+        for i, (tid, tlabel) in enumerate(TABS)
+    )
+
+    # Tab content dict — keyed by tab id (must match TABS entries above).
+    # Each value is a fully-rendered HTML string.
+    tab_contents = {
+        "uebersicht": (
+            bestand_html + "\n" + kpi_html
+        ),
+        "jahresvergleich": (
+            '''<div class="chart-container">
+            <h3>Übernachtungen pro Monat (Jahresvergleich)</h3>
+            <div class="chart-wrapper line-chart"><canvas id="monthlyChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+            <h3>Buchungen pro Monat (Vergleichstabelle)</h3>
+            ''' + comparison_table + '''
+        </div>'''
+        ),
+        "reiseprofile": (
+            '''<div class="chart-container">
+            <h3>Reiseprofile – Jahresvergleich</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:12px;">Abgeleitet aus gebuchten Zusatzleistungen: Kinderreisebett/Hochstuhl = Familie, Hund-Zuschlag = Hundeurlaub, Aufschlag Mitreisende = Gruppe, Sauna/Whirlpool = Wellness, Wallbox = E-Auto.</p>
+            <div class="chart-wrapper bar-chart"><canvas id="profileYearChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+            <h3>Top 15 Unterkünfte – Hundeurlaub-Anteil</h3>
+            <div class="chart-wrapper hbar-chart"><canvas id="hundChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+            <h3>Alle Unterkünfte – Zielgruppen-Verteilung</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:12px;">Sortiert nach höchstem Hundeurlaub-Anteil.</p>
+            <div style="overflow-x:auto;">
+            <table class="prov-table">
+                <thead>
+                    <tr>
+                        <th>Unterkunft</th><th class="num">Buchungen</th>
+                        <th class="num">Hund</th><th class="num">Familie</th>
+                        <th class="num">Gruppe</th><th class="num">Wellness</th>
+                        <th class="num">Paare/Einzel</th><th>Verteilung</th>
+                    </tr>
+                </thead>
+                <tbody>''' + profile_table_rows + '''</tbody>
+            </table>
+            </div>
+        </div>'''
+        ),
+        "vertriebskanaele": channel_year_html,
+        "orte": (
+            '''<div class="chart-container">
+            <h3>Buchungen nach Ort</h3>
+            <div class="chart-wrapper bar-chart"><canvas id="ortChart"></canvas></div>
+        </div>'''
+        ),
+        "zusatzkosten": (
+            '''<div class="chart-container">
+            <h3>Top 10 Zusatzkosten – Vermittler vs. Eigentümer</h3>
+            <div class="chart-wrapper hbar-chart"><canvas id="zusatzChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+            <h3>Top 5 Zusatzkosten – Jahresvergleich</h3>
+            <div class="chart-wrapper bar-chart"><canvas id="zusatzYearChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+            <h3>Alle Zusatzkosten – Detailtabelle</h3>
+            ''' + zusatz_detail_table + '''
+        </div>'''
+        ),
+        "provisionen": (
+            '''<div class="chart-container">
+            <h3>Provisionseinnahmen Ostseeliebe – nach Unterkunft</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:16px;">Miete Vermittler + Zusatzkosten Vermittler = Provision gesamt. Sortiert nach höchster Provision.</p>
+        </div>
+        ''' + prov_tab_html
+        ),
+        "unterkunft_detail": (
+            '''<div class="chart-container">
+            <h3>Unterkunft auswählen</h3>
+            <select id="propSelect" class="prop-select">
+                <option value="">-- Bitte Unterkunft wählen --</option>
+                ''' + property_options + '''
+            </select>
+        </div>
+        <div id="propDetailContent"></div>'''
+        ),
+    }
+
+    tab_content_html = "\n\n".join(
+        '        <!-- {label} -->\n        <div class="tab-content{active}" id="{tid}">\n{content}\n        </div>'.format(
+            label=tlabel,
+            active=" active" if i == 0 else "",
+            tid=tid,
+            content=tab_contents.get(tid, ""),
+        )
+        for i, (tid, tlabel) in enumerate(TABS)
+    )
+
     html = f'''<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -1035,6 +1150,29 @@ def generate_html(data):
     <title>Ostseeliebe - Buchungs-Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
+        /* ================================================================
+           Design tokens — change colors / shadows / radii HERE only.
+           Do NOT hardcode #0066cc or similar values anywhere else in CSS.
+           ================================================================ */
+        :root {{
+            --color-primary:    #0066cc;
+            --color-accent:     #00aaaa;
+            --color-danger:     #ff6b6b;
+            --color-warning:    #ffa500;
+            --color-teal:       #4ecdc4;
+            --color-lavender:   #aa96da;
+            --color-mint:       #95e1d3;
+            --color-green:      #2e7d32;
+            --color-bg:         #f5f7fa;
+            --color-border:     #e0e0e0;
+            --color-text:       #333;
+            --color-text-muted: #888;
+            --color-table-head-bg: #e8f0fe;
+            --shadow-card:      0 2px 8px rgba(0,0,0,0.08);
+            --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.12);
+            --radius-card:      12px;
+            --radius-sm:        8px;
+        }}
         * {{
             margin: 0;
             padding: 0;
@@ -1042,11 +1180,11 @@ def generate_html(data):
         }}
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
-            background: #f5f7fa;
-            color: #333;
+            background: var(--color-bg);
+            color: var(--color-text);
         }}
         .header {{
-            background: linear-gradient(135deg, #0066cc, #00aaaa);
+            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
             color: white;
             padding: 30px 40px;
             text-align: center;
@@ -1076,11 +1214,11 @@ def generate_html(data):
             transition: all 0.2s;
         }}
         .tab:hover {{
-            color: #0066cc;
+            color: var(--color-primary);
         }}
         .tab.active {{
-            color: #0066cc;
-            border-bottom-color: #0066cc;
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
         }}
         .content {{
             max-width: 1400px;
@@ -1098,10 +1236,10 @@ def generate_html(data):
         }}
         .year-title {{
             font-size: 20px;
-            color: #0066cc;
+            color: var(--color-primary);
             margin-bottom: 12px;
             padding-bottom: 6px;
-            border-bottom: 2px solid #e0e0e0;
+            border-bottom: 2px solid var(--color-border);
         }}
         .kpi-grid {{
             display: grid;
@@ -1113,16 +1251,16 @@ def generate_html(data):
             border-radius: 12px;
             padding: 20px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: var(--shadow-card);
             transition: transform 0.2s;
         }}
         .kpi-card:hover {{
             transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            box-shadow: var(--shadow-card-hover);
         }}
         .kpi-label {{
             font-size: 12px;
-            color: #888;
+            color: var(--color-text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 8px;
@@ -1130,13 +1268,13 @@ def generate_html(data):
         .kpi-value {{
             font-size: 20px;
             font-weight: 700;
-            color: #0066cc;
+            color: var(--color-primary);
         }}
         .chart-container {{
             background: white;
             border-radius: 12px;
             padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: var(--shadow-card);
             margin-bottom: 24px;
         }}
         .chart-container h3 {{
@@ -1177,7 +1315,7 @@ def generate_html(data):
             font-size: 14px;
         }}
         .comparison-table th {{
-            background: #0066cc;
+            background: var(--color-primary);
             color: white;
             font-weight: 600;
         }}
@@ -1185,10 +1323,10 @@ def generate_html(data):
             background: #f0f7ff;
         }}
         .total-row {{
-            background: #f5f7fa !important;
+            background: var(--color-bg) !important;
         }}
         .total-row td {{
-            border-top: 2px solid #0066cc;
+            border-top: 2px solid var(--color-primary);
         }}
         .prov-table {{
             width: 100%;
@@ -1197,7 +1335,7 @@ def generate_html(data):
             white-space: nowrap;
         }}
         .prov-table th {{
-            background: #0066cc;
+            background: var(--color-primary);
             color: white;
             font-weight: 600;
             padding: 10px 12px;
@@ -1221,7 +1359,7 @@ def generate_html(data):
         }}
         .prov-total {{
             background: #f0f4f8 !important;
-            border-top: 2px solid #0066cc;
+            border-top: 2px solid var(--color-primary);
         }}
         .pk-value.green {{
             color: #2e7d32 !important;
@@ -1238,7 +1376,7 @@ def generate_html(data):
             transition: border-color 0.2s;
         }}
         .prop-select:focus {{
-            border-color: #0066cc;
+            border-color: var(--color-primary);
         }}
         .prop-detail-grid {{
             display: grid;
@@ -1255,7 +1393,7 @@ def generate_html(data):
         }}
         .prop-kpi .pk-label {{
             font-size: 11px;
-            color: #888;
+            color: var(--color-text-muted);
             text-transform: uppercase;
             letter-spacing: 0.4px;
             margin-bottom: 6px;
@@ -1263,16 +1401,16 @@ def generate_html(data):
         .prop-kpi .pk-value {{
             font-size: 18px;
             font-weight: 700;
-            color: #0066cc;
+            color: var(--color-primary);
         }}
         .prop-kpi .pk-value.green {{
-            color: #2e7d32;
+            color: var(--color-green);
         }}
         .prop-section {{
             background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: var(--shadow-card);
             margin-bottom: 20px;
         }}
         .prop-section h4 {{
@@ -1288,8 +1426,8 @@ def generate_html(data):
         }}
         .prop-channel-table th,
         .prop-zk-table th {{
-            background: #e8f0fe;
-            color: #0066cc;
+            background: var(--color-table-head-bg);
+            color: var(--color-primary);
             font-weight: 600;
             padding: 8px 10px;
             text-align: left;
@@ -1321,8 +1459,8 @@ def generate_html(data):
             font-size: 13px;
         }}
         .zusatz-table th {{
-            background: #e8f0fe;
-            color: #0066cc;
+            background: var(--color-table-head-bg);
+            color: var(--color-primary);
             font-weight: 600;
             padding: 8px 12px;
             text-align: left;
@@ -1347,7 +1485,7 @@ def generate_html(data):
         }}
         .zusatz-table .zk-total {{
             background: #f5f7fa;
-            border-top: 2px solid #0066cc;
+            border-top: 2px solid var(--color-primary);
         }}
         .zusatz-detail-table {{
             width: 100%;
@@ -1356,7 +1494,7 @@ def generate_html(data):
             white-space: nowrap;
         }}
         .zusatz-detail-table th {{
-            background: #0066cc;
+            background: var(--color-primary);
             color: white;
             font-weight: 600;
             padding: 8px 10px;
@@ -1383,7 +1521,7 @@ def generate_html(data):
         }}
         .zusatz-detail-table .zk-total {{
             background: #f0f4f8;
-            border-top: 2px solid #0066cc;
+            border-top: 2px solid var(--color-primary);
         }}
         .zusatz-detail-table tr:hover {{
             background: #f0f7ff;
@@ -1405,139 +1543,11 @@ def generate_html(data):
     </div>
 
     <div class="tabs">
-        <div class="tab active" data-tab="uebersicht">\u00dcbersicht</div>
-        <div class="tab" data-tab="jahresvergleich">Jahresvergleich</div>
-        <div class="tab" data-tab="reiseprofile">Reiseprofile</div>
-        <div class="tab" data-tab="vertriebskanaele">Vertriebskan\u00e4le</div>
-        <div class="tab" data-tab="orte">Orte</div>
-        <div class="tab" data-tab="zusatzkosten">Zusatzkosten</div>
-        <div class="tab" data-tab="provisionen">Provisionen</div>
-        <div class="tab" data-tab="unterkunft_detail">Unterkunft Detail</div>
+        {tab_nav_html}
     </div>
 
     <div class="content">
-        <!-- Uebersicht -->
-        <div class="tab-content active" id="uebersicht">
-            {bestand_html}
-            {kpi_html}
-        </div>
-
-        <!-- Jahresvergleich -->
-        <div class="tab-content" id="jahresvergleich">
-            <div class="chart-container">
-                <h3>\u00dcbernachtungen pro Monat (Jahresvergleich)</h3>
-                <div class="chart-wrapper line-chart">
-                    <canvas id="monthlyChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>Buchungen pro Monat (Vergleichstabelle)</h3>
-                {comparison_table}
-            </div>
-        </div>
-
-        <!-- Reiseprofile -->
-        <div class="tab-content" id="reiseprofile">
-            <div class="chart-container">
-                <h3>Reiseprofile \u2013 Jahresvergleich</h3>
-                <p style="color:#666;font-size:13px;margin-bottom:12px;">Abgeleitet aus gebuchten Zusatzleistungen: Kinderreisebett/Hochstuhl = Familie, Hund-Zuschlag = Hundeurlaub, Aufschlag Mitreisende = Gruppe, Sauna/Whirlpool = Wellness, Wallbox = E-Auto.</p>
-                <div class="chart-wrapper bar-chart">
-                    <canvas id="profileYearChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>Top 15 Unterk\u00fcnfte \u2013 Hundeurlaub-Anteil</h3>
-                <div class="chart-wrapper hbar-chart">
-                    <canvas id="hundChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>Alle Unterk\u00fcnfte \u2013 Zielgruppen-Verteilung</h3>
-                <p style="color:#666;font-size:13px;margin-bottom:12px;">Sortiert nach h\u00f6chstem Hundeurlaub-Anteil. Der farbige Balken zeigt die Verteilung:
-                    <span style="color:#0066cc;">\u25cf Paare</span>
-                    <span style="color:#ff6b6b;">\u25cf Hund</span>
-                    <span style="color:#ffa500;">\u25cf Gruppe</span>
-                    <span style="color:#4ecdc4;">\u25cf Familie</span>
-                    <span style="color:#aa96da;">\u25cf Wellness</span>
-                    <span style="color:#95e1d3;">\u25cf E-Auto</span>
-                </p>
-                <div style="overflow-x:auto;">
-                <table class="prov-table">
-                    <thead>
-                        <tr>
-                            <th>Unterkunft</th>
-                            <th class="num">Buchungen</th>
-                            <th class="num">Hund</th>
-                            <th class="num">Familie</th>
-                            <th class="num">Gruppe</th>
-                            <th class="num">Wellness</th>
-                            <th class="num">Paare/Einzel</th>
-                            <th>Verteilung</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {profile_table_rows}
-                    </tbody>
-                </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Vertriebskanaele -->
-        <div class="tab-content" id="vertriebskanaele">
-            {channel_year_html}
-        </div>
-
-        <!-- Orte -->
-        <div class="tab-content" id="orte">
-            <div class="chart-container">
-                <h3>Buchungen nach Ort</h3>
-                <div class="chart-wrapper bar-chart">
-                    <canvas id="ortChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Provisionen -->
-        <div class="tab-content" id="provisionen">
-            <div class="chart-container">
-                <h3>Provisionseinnahmen Ostseeliebe \u2013 nach Unterkunft</h3>
-                <p style="color:#666;font-size:13px;margin-bottom:16px;">Miete Vermittler + Zusatzkosten Vermittler = Provision gesamt. Sortiert nach h\u00f6chster Provision.</p>
-            </div>
-            {prov_tab_html}
-        </div>
-
-        <!-- Unterkunft Detail -->
-        <div class="tab-content" id="unterkunft_detail">
-            <div class="chart-container">
-                <h3>Unterkunft ausw\u00e4hlen</h3>
-                <select id="propSelect" class="prop-select">
-                    <option value="">-- Bitte Unterkunft w\u00e4hlen --</option>
-                    {property_options}
-                </select>
-            </div>
-            <div id="propDetailContent"></div>
-        </div>
-
-        <!-- Zusatzkosten -->
-        <div class="tab-content" id="zusatzkosten">
-            <div class="chart-container">
-                <h3>Top 10 Zusatzkosten \u2013 Vermittler vs. Eigent\u00fcmer</h3>
-                <div class="chart-wrapper hbar-chart">
-                    <canvas id="zusatzChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>Top 5 Zusatzkosten \u2013 Jahresvergleich</h3>
-                <div class="chart-wrapper bar-chart">
-                    <canvas id="zusatzYearChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>Alle Zusatzkosten \u2013 Detailtabelle</h3>
-                {zusatz_detail_table}
-            </div>
-        </div>
+        {tab_content_html}
     </div>
 
     <script>
@@ -1570,7 +1580,7 @@ def generate_html(data):
                 scales: {{
                     y: {{
                         beginAtZero: true,
-                        title: {{ display: true, text: 'N\u00e4chte' }}
+                        title: {{ display: true, text: 'Nächte' }}
                     }}
                 }}
             }}
@@ -1681,7 +1691,7 @@ def generate_html(data):
                         borderRadius: 4
                     }},
                     {{
-                        label: 'Eigent\u00fcmer',
+                        label: 'Eigentümer',
                         data: {zusatz_chart_eigentuemer},
                         backgroundColor: '#00aaaa',
                         borderRadius: 4
@@ -1761,7 +1771,7 @@ def generate_html(data):
         function renderProperty(name) {{
             var container = document.getElementById('propDetailContent');
             if (!name || !propData[name]) {{
-                container.innerHTML = '<p style="color:#888;padding:20px;">Bitte eine Unterkunft ausw\u00e4hlen.</p>';
+                container.innerHTML = '<p style="color:#888;padding:20px;">Bitte eine Unterkunft auswählen.</p>';
                 return;
             }}
             var p = propData[name];
@@ -1777,14 +1787,14 @@ def generate_html(data):
                 // KPI Grid
                 html += '<div class="prop-detail-grid">';
                 html += '<div class="prop-kpi"><div class="pk-label">Buchungen</div><div class="pk-value">' + yd.buchungen + '</div></div>';
-                html += '<div class="prop-kpi"><div class="pk-label">N\u00e4chte</div><div class="pk-value">' + fmtNum(yd.naechte) + '</div></div>';
+                html += '<div class="prop-kpi"><div class="pk-label">Nächte</div><div class="pk-value">' + fmtNum(yd.naechte) + '</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Reisepreis</div><div class="pk-value">' + fmtEuro(yd.reisepreis) + '</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Miete gesamt</div><div class="pk-value">' + fmtEuro(yd.miete_gesamt) + '</div></div>';
-                html += '<div class="prop-kpi"><div class="pk-label">Miete Eigent\u00fcmer</div><div class="pk-value green">' + fmtEuro(yd.miete_eigentuemer) + '</div></div>';
+                html += '<div class="prop-kpi"><div class="pk-label">Miete Eigentümer</div><div class="pk-value green">' + fmtEuro(yd.miete_eigentuemer) + '</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Provision (Verm.)</div><div class="pk-value" style="color:#e65100;">' + fmtEuro(yd.miete_vermittler) + '</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Prov.satz</div><div class="pk-value" style="color:#e65100;">' + fmtNum(yd.provision_pct, 1) + ' %</div></div>';
-                html += '<div class="prop-kpi"><div class="pk-label">\u00d8 Preis/Nacht</div><div class="pk-value">' + fmtEuro(yd.avg_preis_nacht) + '</div></div>';
-                html += '<div class="prop-kpi"><div class="pk-label">\u00d8 Aufenthalt</div><div class="pk-value">' + fmtNum(yd.avg_aufenthalt, 1) + ' N.</div></div>';
+                html += '<div class="prop-kpi"><div class="pk-label">Ø Preis/Nacht</div><div class="pk-value">' + fmtEuro(yd.avg_preis_nacht) + '</div></div>';
+                html += '<div class="prop-kpi"><div class="pk-label">Ø Aufenthalt</div><div class="pk-value">' + fmtNum(yd.avg_aufenthalt, 1) + ' N.</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Auslastung</div><div class="pk-value">' + fmtNum(yd.belegung_pct, 1) + ' %</div></div>';
                 html += '</div>';
 
@@ -1792,7 +1802,7 @@ def generate_html(data):
                 if (yd.channels && yd.channels.length > 0) {{
                     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">';
                     html += '<div>';
-                    html += '<h4 style="font-size:14px;margin-bottom:8px;">Vertriebskan\u00e4le</h4>';
+                    html += '<h4 style="font-size:14px;margin-bottom:8px;">Vertriebskanäle</h4>';
                     html += '<table class="prop-channel-table"><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody>';
                     yd.channels.forEach(function(ch) {{
                         html += '<tr><td>' + (ch[0] || '(leer)') + '</td><td class="num">' + ch[1] + '</td></tr>';
@@ -1803,7 +1813,7 @@ def generate_html(data):
                     html += '<div>';
                     html += '<h4 style="font-size:14px;margin-bottom:8px;">Zusatzkosten</h4>';
                     if (yd.zusatzkosten && yd.zusatzkosten.length > 0) {{
-                        html += '<table class="prop-zk-table"><thead><tr><th>Kategorie</th><th class="num">Gesamt</th><th class="num sub">Vermittler</th><th class="num sub">Eigent\u00fcmer</th></tr></thead><tbody>';
+                        html += '<table class="prop-zk-table"><thead><tr><th>Kategorie</th><th class="num">Gesamt</th><th class="num sub">Vermittler</th><th class="num sub">Eigentümer</th></tr></thead><tbody>';
                         var zkTotal = 0, zkV = 0, zkE = 0;
                         yd.zusatzkosten.forEach(function(z) {{
                             html += '<tr><td>' + z.name + '</td><td class="num">' + fmtEuro(z.gesamt) + '</td><td class="num sub">' + fmtEuro(z.vermittler) + '</td><td class="num sub">' + fmtEuro(z.eigentuemer) + '</td></tr>';
@@ -1821,7 +1831,7 @@ def generate_html(data):
             }});
 
             // Jahresvergleich mini chart
-            html += '<div class="prop-section"><h4>Jahresvergleich \u2013 Reisepreis</h4><canvas id="propYearChart" style="max-height:300px;"></canvas></div>';
+            html += '<div class="prop-section"><h4>Jahresvergleich – Reisepreis</h4><canvas id="propYearChart" style="max-height:300px;"></canvas></div>';
             container.innerHTML = html;
 
             // Render mini chart
@@ -1843,7 +1853,7 @@ def generate_html(data):
                         labels: labels,
                         datasets: [
                             {{ label: 'Reisepreis', data: rpData, backgroundColor: '#0066cc', borderRadius: 4 }},
-                            {{ label: 'Miete Eigent\u00fcmer', data: meData, backgroundColor: '#00aaaa', borderRadius: 4 }}
+                            {{ label: 'Miete Eigentümer', data: meData, backgroundColor: '#00aaaa', borderRadius: 4 }}
                         ]
                     }},
                     options: {{
@@ -1918,19 +1928,19 @@ def generate_property_html(prop_name, pdata, years):
             <h2>{y}</h2>
             <div class="kpi-grid">
                 <div class="kpi"><div class="kl">Buchungen</div><div class="kv">{yd["buchungen"]}</div></div>
-                <div class="kpi"><div class="kl">N\u00e4chte</div><div class="kv">{format_german_number(yd["naechte"], 0)}</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">{format_german_number(yd["naechte"], 0)}</div></div>
                 <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">{format_euro(yd["reisepreis"])}</div></div>
                 <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">{format_euro(yd["miete_gesamt"])}</div></div>
-                <div class="kpi"><div class="kl">Miete Eigent\u00fcmer</div><div class="kv green">{format_euro(yd["miete_eigentuemer"])}</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">{format_euro(yd["miete_eigentuemer"])}</div></div>
                 <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">{format_euro(yd.get("miete_vermittler", 0))}</div></div>
                 <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">{format_german_number(yd.get("provision_pct", 0), 1)} %</div></div>
-                <div class="kpi"><div class="kl">\u00d8 Preis/Nacht</div><div class="kv">{format_euro(yd["avg_preis_nacht"])}</div></div>
-                <div class="kpi"><div class="kl">\u00d8 Aufenthalt</div><div class="kv">{format_german_number(yd["avg_aufenthalt"], 1)} N.</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">{format_euro(yd["avg_preis_nacht"])}</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">{format_german_number(yd["avg_aufenthalt"], 1)} N.</div></div>
                 <div class="kpi"><div class="kl">Auslastung</div><div class="kv">{format_german_number(yd["belegung_pct"], 1)} %</div></div>
             </div>
             <div class="two-col">
                 <div>
-                    <h3>Vertriebskan\u00e4le</h3>
+                    <h3>Vertriebskanäle</h3>
                     <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody>{ch_rows}</tbody></table>
                 </div>
                 <div>
@@ -1949,7 +1959,7 @@ def generate_property_html(prop_name, pdata, years):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{prop_name} \u2013 Umsatz\u00fcbersicht</title>
+    <title>{prop_name} – Umsatzübersicht</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         * {{ margin:0; padding:0; box-sizing:border-box; }}
@@ -1980,11 +1990,11 @@ def generate_property_html(prop_name, pdata, years):
 <body>
     <div class="header">
         <h1>{prop_name}</h1>
-        <div class="sub">{pdata["ort"]} \u2014 Umsatz\u00fcbersicht \u2014 Stand {update_date}</div>
+        <div class="sub">{pdata["ort"]} — Umsatzübersicht — Stand {update_date}</div>
     </div>
     <div class="container">
         <div class="chart-section">
-            <h3>Jahresvergleich \u2013 Reisepreis & Miete Eigent\u00fcmer</h3>
+            <h3>Jahresvergleich – Reisepreis & Miete Eigentümer</h3>
             <canvas id="yearChart" style="max-height:300px;"></canvas>
         </div>
         {year_sections}
@@ -1996,7 +2006,7 @@ def generate_property_html(prop_name, pdata, years):
                 labels: {json_labels},
                 datasets: [
                     {{ label: 'Reisepreis', data: {json_rp}, backgroundColor: '#0066cc', borderRadius: 4 }},
-                    {{ label: 'Miete Eigent\u00fcmer', data: {json_me}, backgroundColor: '#00aaaa', borderRadius: 4 }}
+                    {{ label: 'Miete Eigentümer', data: {json_me}, backgroundColor: '#00aaaa', borderRadius: 4 }}
                 ]
             }},
             options: {{
