@@ -25,6 +25,63 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_CSV = os.path.expanduser("~/Claude_14.04.2026/buchungen_export_2027.csv")
 DEFAULT_OUT = os.path.expanduser("~/Claude_14.04.2026/ostseeliebe-dashboard.html")
 
+# ---------------------------------------------------------------------------
+# Apartmenthaus → Unterkunft Mapping (Objekt-Nummern aus Contao)
+# ---------------------------------------------------------------------------
+APARTMENTHAUS_MAPPING = {
+    "Apartmenthaus Viktoria Luna": [{"nr":174,"name":"Elli"},{"nr":140,"name":"Kleine Lagune"}],
+    "Darßer Landhaus": [{"nr":269,"name":"Ruheoase"},{"nr":270,"name":"Wellnessoase"}],
+    "Das Feriendomizil Traumzeit Zingst": [{"nr":218,"name":"Traumzeit 1"},{"nr":256,"name":"Traumzeit 2"}],
+    "Das Feriendomizil Zingst – Strandhafer & Strandkaten": [{"nr":259,"name":"RC - Strandhafer"},{"nr":258,"name":"RC - Strandkaten"}],
+    "Ferienhäuser Alter Schwede": [{"nr":201,"name":"Alter Schwede 1"},{"nr":202,"name":"Alter Schwede 2"},{"nr":203,"name":"Alter Schwede 3"}],
+    "Ferienhäuser grüner Winkel": [{"nr":56,"name":"RC - Charlotte"},{"nr":57,"name":"RC - Therese"}],
+    "Ferienwohnung Velo": [{"nr":77,"name":"Velo 1"},{"nr":78,"name":"Velo 2"},{"nr":79,"name":"Velo 3"},{"nr":138,"name":"Velo 4"}],
+    "Haus am kleinen Hafen": [{"nr":273,"name":"kl. Hafen No 1"},{"nr":274,"name":"kl. Hafen No 2"},{"nr":275,"name":"kl. Hafen No 3"}],
+    "Haus Bi de Wisch": [{"nr":221,"name":"Bi de Wisch EG"},{"nr":222,"name":"Bi de Wisch OG"}],
+    "Haus Blaue Wieck": [{"nr":260,"name":"DWR Mitte"},{"nr":261,"name":"OSS rechts"},{"nr":262,"name":"WSL links"}],
+    "Haus Bliesenrade": [{"nr":271,"name":"Bernstein"}],
+    "Haus Boddenblick": [{"nr":283,"name":"Boddenblick 9"}],
+    "Haus Chausseestraße": [{"nr":281,"name":"Moin Moin"},{"nr":278,"name":"Santa Karina Born"}],
+    "Haus Citynah": [{"nr":137,"name":"Frau Zander"},{"nr":194,"name":"Möwennest Nr. 5"},{"nr":166,"name":"Seewind"}],
+    "Haus Cozy Five": [{"nr":190,"name":"Cozy 1"},{"nr":191,"name":"Cozy 2"},{"nr":192,"name":"Cozy 3"},{"nr":131,"name":"Cozy 4"},{"nr":132,"name":"Cozy 5"}],
+    "Haus Darssduett": [{"nr":279,"name":"Darss-Duett 1"},{"nr":290,"name":"Darss-Duett 2"}],
+    "Haus Darßer Sonnenfisch": [{"nr":228,"name":"Clownfisch"},{"nr":247,"name":"Sonnendeck"}],
+    "Häuser Haseneck": [{"nr":129,"name":"DAT KROEGER HUS"},{"nr":139,"name":"Kranschehus"}],
+    "Haus Hoppenberg Strandquartier": [{"nr":145,"name":"Bärbel"},{"nr":144,"name":"Lotta"}],
+    "Haus im Zentrum": [{"nr":114,"name":"Ocean Star"},{"nr":99,"name":"Rewal"},{"nr":115,"name":"Strandhaus Zingst"}],
+    "Haus In den Wiesen": [{"nr":282,"name":"In den Wiesen App. 2"},{"nr":227,"name":"In den Wiesen 3"}],
+    "Haus Kraanstiet": [{"nr":293,"name":"Kraanstiet 1"},{"nr":294,"name":"Kraanstiet 2"},{"nr":295,"name":"Kraanstiet 3"}],
+    "Haus Küstentour": [{"nr":90,"name":"Dünenläufer"},{"nr":92,"name":"Ostseekoje"},{"nr":94,"name":"Sandbank No. 4"},{"nr":91,"name":"Strandsegler"}],
+    "Haus Küstenzauber": [{"nr":98,"name":"Bremen"},{"nr":97,"name":"Stralsund"}],
+    "Haus Meerkaten": [{"nr":168,"name":"Lust auf Meer"},{"nr":148,"name":"Schifferkaten"}],
+    "Haus Meerle": [{"nr":288,"name":"RC - Meerle 1"},{"nr":291,"name":"RC - Meerle 2"},{"nr":296,"name":"RC - Meerle 3"},{"nr":297,"name":"RC - Meerle 4"},{"nr":299,"name":"RC - Meerle 5"}],
+    "Haus Öresundhus": [{"nr":267,"name":"Öresundhus Whg.2"},{"nr":268,"name":"Öresundhus Whg.3"}],
+    "Haus Quartett Küstenglück": [{"nr":195,"name":"Windland"},{"nr":196,"name":"Windspiel"},{"nr":197,"name":"Passatwind"},{"nr":198,"name":"Wellenbrecher"}],
+    "Haus Reetzeit": [{"nr":95,"name":"Reetzeit 1"},{"nr":96,"name":"Reetzeit 2"}],
+    "Haus Rosenberg Küstenharmonie": [{"nr":108,"name":"Kranichrast"},{"nr":158,"name":"Meeresbrise"},{"nr":123,"name":"Zeeskahn"}],
+    "Haus Schwedengang": [{"nr":189,"name":"Mondzauber"},{"nr":188,"name":"Sonnenschein"}],
+    "Haus Seeluft & Seestern": [{"nr":287,"name":"Seeluft"},{"nr":286,"name":"Seestern"}],
+    "Haus Sterntaucher": [{"nr":231,"name":"Sterntaucher 1"},{"nr":232,"name":"Sterntaucher 2"},{"nr":233,"name":"Sterntaucher 3"},{"nr":234,"name":"Sterntaucher 4"},{"nr":235,"name":"Sterntaucher 5"},{"nr":236,"name":"Sterntaucher 6"}],
+    "Haus Störtebeker": [{"nr":82,"name":"Küstenzauber 12a Whg.3"},{"nr":89,"name":"Schatzkiste 12/2"},{"nr":83,"name":"Störtebekerkoje 12/1"},{"nr":84,"name":"Störtebekerkoje 12/4"},{"nr":85,"name":"Störtebekerkoje 12/5"},{"nr":86,"name":"Störtebekerkoje 12/6"},{"nr":87,"name":"Störtebekerkoje 12a/4"},{"nr":88,"name":"Störtebekerkoje 12a/6"},{"nr":136,"name":"uns Leef HS 12a Whg.1"}],
+    "Haus Tordalk": [{"nr":237,"name":"Tordalk 1"},{"nr":246,"name":"Tordalk 3"},{"nr":239,"name":"Tordalk 5"},{"nr":240,"name":"Tordalk 6"},{"nr":241,"name":"Tordalk 7"},{"nr":242,"name":"Tordalk 9"},{"nr":243,"name":"Tordalk 10"}],
+    "Haus Windflüchter": [{"nr":179,"name":"Windflüchter 1"},{"nr":180,"name":"Windflüchter 2"},{"nr":181,"name":"Windflüchter 3"},{"nr":182,"name":"Windflüchter EG"}],
+    "Haus Windwatt": [{"nr":177,"name":"Windwatt 2"},{"nr":178,"name":"Windwatt 4"}],
+    "Haus Zur Heiderose": [{"nr":185,"name":"54 Grad"},{"nr":147,"name":"Künstlerkate"},{"nr":149,"name":"Mondmuschel"},{"nr":171,"name":"Strandglück"},{"nr":175,"name":"Wellenflüstern"},{"nr":122,"name":"Wildrose"}],
+    "Residenz am Strand": [{"nr":151,"name":"Residenz 114"},{"nr":152,"name":"Residenz 120"},{"nr":153,"name":"Residenz 123"},{"nr":155,"name":"Residenz 232"},{"nr":156,"name":"Residenz 238"},{"nr":157,"name":"Residenz 242"},{"nr":159,"name":"Residenz 352"},{"nr":161,"name":"Residenz 567"},{"nr":162,"name":"Residenz 677"}],
+    "Residenz Kormoran": [{"nr":276,"name":"Ankerzeit H7"},{"nr":238,"name":"Meerzeit D6"},{"nr":245,"name":"Windflüchter F5"}],
+    "Speicherresidenz Barth": [{"nr":29,"name":"App. 1.5"},{"nr":30,"name":"App. 0.2"},{"nr":31,"name":"App. 0.3"},{"nr":32,"name":"App. 2.1"},{"nr":33,"name":"App. 2.2"},{"nr":34,"name":"App. 3.3"},{"nr":35,"name":"App. 3.4"},{"nr":36,"name":"App. 3.7"},{"nr":37,"name":"App. 3.11"},{"nr":38,"name":"App. 3.1"},{"nr":39,"name":"App. 4.10"},{"nr":40,"name":"App. 4.11"},{"nr":41,"name":"App. 4.7"},{"nr":42,"name":"App. 4.6"},{"nr":43,"name":"App. 5.6"},{"nr":44,"name":"App. 5.9"},{"nr":45,"name":"App. 5.10"},{"nr":46,"name":"App. 6.1"},{"nr":47,"name":"App. 4.4"},{"nr":48,"name":"App. 2.3"},{"nr":49,"name":"App. 5.11"},{"nr":50,"name":"App. 7.1"}],
+    "Strandapartments Düne 7": [{"nr":70,"name":"Düne 7 Whg. 3"},{"nr":71,"name":"Düne 7 Whg. 5"},{"nr":72,"name":"Düne 7 Whg. 6"},{"nr":73,"name":"Düne 7 Whg. 7"},{"nr":74,"name":"Düne 7 Whg. 8"},{"nr":75,"name":"Düne 7 Whg. 9"},{"nr":76,"name":"Düne 7 Whg. 10"}],
+    "Strandresort Fuhlendorf": [{"nr":204,"name":"Luv"},{"nr":284,"name":"Sonnenbirke"},{"nr":248,"name":"Sonnenzauber"}],
+    "Villa Seeluft": [{"nr":100,"name":"Seeluft 3"},{"nr":150,"name":"Seeluft 8"}],
+    "Villa Strandoase Rosenberg": [{"nr":211,"name":"Küstenkajüte Whg.1"},{"nr":212,"name":"Küstenkajüte Whg.2"},{"nr":213,"name":"Küstenkajüte Whg.5"},{"nr":214,"name":"Küstenkajüte Whg.7"}],
+}
+# Umgekehrtes Mapping: Objekt-Nr (str) → Hausname
+_OBJEKT_ZU_HAUS = {
+    str(obj["nr"]): haus
+    for haus, objekte in APARTMENTHAUS_MAPPING.items()
+    for obj in objekte
+}
+
 
 def parse_german_number(s):
     """Parse a German-formatted number (e.g. '1.234,56') to float."""
@@ -345,7 +402,7 @@ def compute_data(bookings):
         })
     zusatz_sorted.sort(key=lambda x: abs(x["total"]), reverse=True)
 
-    # Per-year Zusatzkosten totals (for Übersicht summary)
+    # Per-year Zusatzkosten totals (für Übersicht summary)
     zusatz_year_totals = {}
     for y in years:
         v_sum = sum(z["per_year"][y]["vermittler"] for z in zusatz_sorted)
@@ -431,6 +488,31 @@ def compute_data(bookings):
         if prop_prov:
             provision_by_prop[prop_name] = {"ort": pd["ort"], "years": prop_prov}
 
+    # --- Apartmenthaus aggregation ---
+    # {haus_name: {year: {unit_name: {buchungen, umsatz}}}}
+    haus_year_data = {}
+    for haus_name, objekte in APARTMENTHAUS_MAPPING.items():
+        if not objekte:
+            continue
+        haus_year_data[haus_name] = {
+            y: {obj["name"]: {"buchungen": 0, "umsatz": 0.0} for obj in objekte}
+            for y in years
+        }
+    for b in bookings:
+        nr_str = b["objekt_nr"]
+        haus_name = _OBJEKT_ZU_HAUS.get(nr_str)
+        if not haus_name or haus_name not in haus_year_data:
+            continue
+        y = b["anreise"].year
+        if y not in years:
+            continue
+        for obj in APARTMENTHAUS_MAPPING[haus_name]:
+            if str(obj["nr"]) == nr_str:
+                unit = obj["name"]
+                haus_year_data[haus_name][y][unit]["buchungen"] += 1
+                haus_year_data[haus_name][y][unit]["umsatz"] += b["reisepreis"]
+                break
+
     return {
         "years": years,
         "kpis": kpis,
@@ -448,6 +530,7 @@ def compute_data(bookings):
         "profile_colors": profile_colors,
         "profiles_by_year": profiles_by_year,
         "prop_profiles": prop_profiles,
+        "haus_year_data": haus_year_data,
     }
 
 
@@ -469,6 +552,7 @@ def generate_html(data):
     profile_colors = data["profile_colors"]
     profiles_by_year = data["profiles_by_year"]
     prop_profiles = data["prop_profiles"]
+    haus_year_data = data.get("haus_year_data", {})
     stammdaten = data.get("stammdaten")
 
     update_date = datetime.now().strftime("%d.%m.%Y %H:%M")
@@ -1031,6 +1115,201 @@ def generate_html(data):
     #   2. Add the matching content block in tab_contents below
     # The tab navigation and active-state logic are generated automatically.
     # ---------------------------------------------------------------------------
+
+    # --- Build Apartmenthäuser tab HTML ---
+    # Embed all years' data as JSON so the client can filter by year
+    ah_json_years = json.dumps(years_sorted)
+    # Build per-house data structure for JS
+    ah_js_data = {}
+    for haus_name, year_units in haus_year_data.items():
+        ah_js_data[haus_name] = {}
+        for y, units in year_units.items():
+            ah_js_data[haus_name][y] = [
+                {"name": uname, "buchungen": v["buchungen"], "umsatz": round(v["umsatz"], 2)}
+                for uname, v in units.items()
+            ]
+    ah_json_data = json.dumps(ah_js_data, ensure_ascii=False)
+
+    # Static card HTML (all years combined, for initial render / "Alle Jahre")
+    def _build_ah_cards(year_filter=None):
+        cards = []
+        for haus_name, year_units in sorted(haus_year_data.items()):
+            unit_totals = defaultdict(lambda: {"buchungen": 0, "umsatz": 0.0})
+            for y, units in year_units.items():
+                if year_filter and y != year_filter:
+                    continue
+                for uname, v in units.items():
+                    unit_totals[uname]["buchungen"] += v["buchungen"]
+                    unit_totals[uname]["umsatz"] += v["umsatz"]
+            gb = sum(v["buchungen"] for v in unit_totals.values())
+            gu = sum(v["umsatz"] for v in unit_totals.values())
+            if gb == 0:
+                continue
+            obj_count = len(unit_totals)
+            max_b = max((v["buchungen"] for v in unit_totals.values()), default=1) or 1
+            rows = ""
+            for uname, v in sorted(unit_totals.items(), key=lambda x: -x[1]["buchungen"]):
+                bar_pct = round(v["buchungen"] / max_b * 100)
+                umsatz_str = format_euro(v["umsatz"]) if v["umsatz"] > 0 else "–"
+                rows += f'''<tr>
+                        <td class="ah-obj-name">{uname}</td>
+                        <td class="ah-obj-bar"><div class="ah-bar-wrap"><div class="ah-bar" style="width:{bar_pct}%"></div><span class="ah-bar-label">{v["buchungen"]}</span></div></td>
+                        <td class="ah-obj-umsatz">{umsatz_str}</td>
+                    </tr>'''
+            umsatz_badge = f'<span class="ah-kpi-u">{format_euro(gu)}</span>' if gu > 0 else ""
+            suffix = "en" if obj_count != 1 else ""
+            cards.append((gb, gu, haus_name, f'''<div class="ah-card" data-buchungen="{gb}" data-umsatz="{round(gu,2)}" data-name="{haus_name}">
+                    <div class="ah-header">
+                        <span class="ah-name">{haus_name}</span>
+                        <span class="ah-kpi-row">
+                            <span class="ah-kpi-b">{gb} Buchungen</span>
+                            {umsatz_badge}
+                            <span class="ah-kpi-n">{obj_count} Unterkunft{suffix}</span>
+                        </span>
+                    </div>
+                    <table class="ah-obj-table"><tbody>{rows}</tbody></table>
+                </div>'''))
+        cards.sort(key=lambda x: -x[0])
+        return "\n".join(c[3] for c in cards)
+
+    ah_cards_html = _build_ah_cards()
+
+    # Year-filter buttons
+    ah_year_btns = "\n".join(
+        f'<button class="ah-yr-btn" data-year="{y}" onclick="ahFilter({y},this)">{y}</button>'
+        for y in years_sorted
+    )
+
+    apartmenthaus_tab_html = f'''<div class="chart-container">
+        <h3>Apartmenthäuser – Buchungsvergleich</h3>
+        <p style="color:var(--color-text-muted);font-size:13px;margin-bottom:14px;">Buchungen und Reisepreis-Umsatz je Apartmenthaus, aufgeschlüsselt nach Unterkunft.</p>
+        <div class="ah-filter-row">
+            {ah_year_btns}
+            <button class="ah-yr-btn ah-yr-all active" onclick="ahFilter(null,this)">Alle Jahre</button>
+            <span style="margin-left:auto;font-size:13px;color:var(--color-text-muted);">Sortieren:
+            <select id="ahSort" onchange="ahSort(this.value)" style="border:1px solid var(--color-border);border-radius:6px;padding:3px 8px;font-size:13px;">
+                <option value="buchungen">Buchungen ↓</option>
+                <option value="umsatz">Umsatz ↓</option>
+                <option value="name">Name A–Z</option>
+            </select></span>
+        </div>
+        <div class="ah-kpi-summary" id="ahKpiRow">
+            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiHaeuser">–</div><div class="ah-summary-lbl">Häuser</div></div>
+            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiBuchungen">–</div><div class="ah-summary-lbl">Buchungen</div></div>
+            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiUmsatz">–</div><div class="ah-summary-lbl">Umsatz</div></div>
+        </div>
+        <div class="ah-grid" id="ahGrid">
+            {ah_cards_html}
+        </div>
+    </div>
+    <style>
+        .ah-filter-row {{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }}
+        .ah-yr-btn {{ padding:4px 13px; border:1px solid var(--color-border); border-radius:16px; background:#fff; cursor:pointer; font-size:12px; color:#555; transition:all .15s; }}
+        .ah-yr-btn.active, .ah-yr-btn:hover {{ background:var(--color-primary); color:#fff; border-color:var(--color-primary); }}
+        .ah-kpi-summary {{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }}
+        .ah-summary-kpi {{ background:var(--color-bg); border-radius:var(--radius-sm); padding:10px; text-align:center; }}
+        .ah-summary-val {{ font-size:22px; font-weight:700; color:var(--color-primary); }}
+        .ah-summary-lbl {{ font-size:11px; color:var(--color-text-muted); margin-top:2px; }}
+        .ah-grid {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(400px,1fr)); gap:14px; }}
+        .ah-card {{ background:#fff; border-radius:var(--radius-sm); padding:14px; box-shadow:var(--shadow-card); }}
+        .ah-header {{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:8px; }}
+        .ah-name {{ font-weight:600; font-size:13px; color:var(--color-text); flex:1; }}
+        .ah-kpi-row {{ display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end; }}
+        .ah-kpi-b {{ background:#dbeafe; color:#1e40af; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:600; }}
+        .ah-kpi-u {{ background:#d1fae5; color:#065f46; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:600; }}
+        .ah-kpi-n {{ background:var(--color-bg); color:#555; padding:2px 7px; border-radius:10px; font-size:11px; }}
+        .ah-obj-table {{ width:100%; border-collapse:collapse; }}
+        .ah-obj-table tr:not(:last-child) td {{ border-bottom:1px solid var(--color-border); }}
+        .ah-obj-table td {{ padding:4px 3px; vertical-align:middle; }}
+        .ah-obj-name {{ font-size:12px; color:var(--color-text); width:34%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+        .ah-obj-bar {{ width:51%; padding-right:6px; }}
+        .ah-obj-umsatz {{ font-size:11px; color:var(--color-text-muted); text-align:right; white-space:nowrap; width:15%; }}
+        .ah-bar-wrap {{ display:flex; align-items:center; gap:5px; }}
+        .ah-bar {{ height:11px; background:var(--color-primary); border-radius:3px; min-width:3px; }}
+        .ah-bar-label {{ font-size:11px; color:var(--color-text); white-space:nowrap; }}
+    </style>
+    <script>
+    (function() {{
+        const AH_DATA = {ah_json_data};
+        const AH_YEARS = {ah_json_years};
+        let currentYear = null;
+
+        function fmtEur(v) {{
+            return v.toLocaleString('de-DE',{{minimumFractionDigits:0,maximumFractionDigits:0}}) + ' \u20ac';
+        }}
+        function updateCards(year) {{
+            currentYear = year;
+            const grid = document.getElementById('ahGrid');
+            const sortVal = document.getElementById('ahSort').value;
+            let cards = [];
+            for (const [hausName, yearData] of Object.entries(AH_DATA)) {{
+                let units = {{}};
+                const yrs = year ? [year] : AH_YEARS;
+                yrs.forEach(y => {{
+                    (yearData[y] || []).forEach(u => {{
+                        if (!units[u.name]) units[u.name] = {{buchungen:0, umsatz:0}};
+                        units[u.name].buchungen += u.buchungen;
+                        units[u.name].umsatz += u.umsatz;
+                    }});
+                }});
+                const gb = Object.values(units).reduce((s,u) => s + u.buchungen, 0);
+                const gu = Object.values(units).reduce((s,u) => s + u.umsatz, 0);
+                if (gb === 0) continue;
+                cards.push({{hausName, units, gb, gu}});
+            }}
+            // Sort
+            if (sortVal === 'buchungen') cards.sort((a,b) => b.gb - a.gb);
+            else if (sortVal === 'umsatz') cards.sort((a,b) => b.gu - a.gu);
+            else cards.sort((a,b) => a.hausName.localeCompare(b.hausName, 'de'));
+
+            // Render
+            grid.innerHTML = cards.map(c => {{
+                const maxB = Math.max(...Object.values(c.units).map(u => u.buchungen), 1);
+                const rowsSorted = Object.entries(c.units).sort((a,b) => b[1].buchungen - a[1].buchungen);
+                const rows = rowsSorted.map(([uname, v]) => {{
+                    const barPct = Math.round(v.buchungen / maxB * 100);
+                    const uStr = v.umsatz > 0 ? fmtEur(v.umsatz) : '\u2013';
+                    return `<tr>
+                        <td class="ah-obj-name">${{uname}}</td>
+                        <td class="ah-obj-bar"><div class="ah-bar-wrap"><div class="ah-bar" style="width:${{barPct}}%"></div><span class="ah-bar-label">${{v.buchungen}}</span></div></td>
+                        <td class="ah-obj-umsatz">${{uStr}}</td>
+                    </tr>`;
+                }}).join('');
+                const n = Object.keys(c.units).length;
+                const uBadge = c.gu > 0 ? `<span class="ah-kpi-u">${{fmtEur(c.gu)}}</span>` : '';
+                return `<div class="ah-card">
+                    <div class="ah-header">
+                        <span class="ah-name">${{c.hausName}}</span>
+                        <span class="ah-kpi-row">
+                            <span class="ah-kpi-b">${{c.gb}} Buchungen</span>
+                            ${{uBadge}}
+                            <span class="ah-kpi-n">${{n}} Unterkunft${{n!==1?'en':''}}</span>
+                        </span>
+                    </div>
+                    <table class="ah-obj-table"><tbody>${{rows}}</tbody></table>
+                </div>`;
+            }}).join('\\n');
+
+            // Update KPIs
+            const totB = cards.reduce((s,c) => s+c.gb, 0);
+            const totU = cards.reduce((s,c) => s+c.gu, 0);
+            document.getElementById('ahKpiHaeuser').textContent = cards.length;
+            document.getElementById('ahKpiBuchungen').textContent = totB.toLocaleString('de-DE');
+            document.getElementById('ahKpiUmsatz').textContent = fmtEur(totU);
+        }}
+
+        window.ahFilter = function(year, btn) {{
+            document.querySelectorAll('.ah-yr-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            updateCards(year);
+        }};
+        window.ahSort = function(val) {{ updateCards(currentYear); }};
+
+        // Initial render
+        updateCards(null);
+    }})();
+    </script>'''
+
     TABS = [
         ("uebersicht",        "Übersicht"),
         ("jahresvergleich",   "Jahresvergleich"),
@@ -1039,6 +1318,7 @@ def generate_html(data):
         ("orte",              "Orte"),
         ("zusatzkosten",      "Zusatzkosten"),
         ("provisionen",       "Provisionen"),
+        ("apartmenthaeuser",  "Apartmenthaus"),
         ("unterkunft_detail", "Unterkunft Detail"),
     ]
     tab_nav_html = "\n        ".join(
@@ -1067,7 +1347,7 @@ def generate_html(data):
         "reiseprofile": (
             '''<div class="chart-container">
             <h3>Reiseprofile – Jahresvergleich</h3>
-            <p style="color:#666;font-size:13px;margin-bottom:12px;">Abgeleitet aus gebuchten Zusatzleistungen: Kinderreisebett/Hochstuhl = Familie, Hund-Zuschlag = Hundeurlaub, Aufschlag Mitreisende = Gruppe, Sauna/Whirlpool = Wellness, Wallbox = E-Auto.</p>
+            <p style="color:#666;font-size:13px;margin-bottom:12px;">Abgeleitet aus gebuchten Zusatzleistungen: Kinderreisebett/Hochstuhl\u00a0= Familie, Hund-Zuschlag\u00a0= Hundeurlaub, Aufschlag Mitreisende\u00a0= Gruppe, Sauna/Whirlpool\u00a0= Wellness, Wallbox\u00a0= E-Auto.</p>
             <div class="chart-wrapper bar-chart"><canvas id="profileYearChart"></canvas></div>
         </div>
         <div class="chart-container">
@@ -1120,6 +1400,7 @@ def generate_html(data):
         </div>
         ''' + prov_tab_html
         ),
+        "apartmenthaeuser": apartmenthaus_tab_html,
         "unterkunft_detail": (
             '''<div class="chart-container">
             <h3>Unterkunft auswählen</h3>
@@ -1990,7 +2271,7 @@ def generate_property_html(prop_name, pdata, years):
 <body>
     <div class="header">
         <h1>{prop_name}</h1>
-        <div class="sub">{pdata["ort"]} — Umsatzübersicht — Stand {update_date}</div>
+        <div class="sub">{pdata["ort"]} \u2014 Umsatzübersicht \u2014 Stand {update_date}</div>
     </div>
     <div class="container">
         <div class="chart-section">
