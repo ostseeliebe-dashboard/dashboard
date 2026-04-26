@@ -816,7 +816,7 @@ def generate_html(data):
 
     # --- Build Provisionen tab HTML ---
     prov_tab_parts = []
-    for y in years:
+    for y in sorted(years, reverse=True):
         # Provision KPIs for this year
         k = kpis[y]
         mv_total = k["miete_vermittler"]
