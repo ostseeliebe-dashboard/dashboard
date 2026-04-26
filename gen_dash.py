@@ -495,7 +495,7 @@ def compute_data(bookings):
         if not objekte:
             continue
         haus_year_data[haus_name] = {
-            y: {obj["name"]: {"buchungen": 0, "umsatz": 0.0} for obj in objekte}
+            y: {obj["name"]: {"buchungen": 0, "umsatz": 0.0, "miete_eigentuemer": 0.0} for obj in objekte}
             for y in years
         }
     for b in bookings:
@@ -511,6 +511,7 @@ def compute_data(bookings):
                 unit = obj["name"]
                 haus_year_data[haus_name][y][unit]["buchungen"] += 1
                 haus_year_data[haus_name][y][unit]["umsatz"] += b["reisepreis"]
+                haus_year_data[haus_name][y][unit]["miete_eigentuemer"] += b["miete_eigentuemer"]
                 break
 
     return {
@@ -1125,7 +1126,7 @@ def generate_html(data):
         ah_js_data[haus_name] = {}
         for y, units in year_units.items():
             ah_js_data[haus_name][y] = [
-                {"name": uname, "buchungen": v["buchungen"], "umsatz": round(v["umsatz"], 2)}
+                {"name": uname, "buchungen": v["buchungen"], "umsatz": round(v["umsatz"], 2), "miete_eigentuemer": round(v["miete_eigentuemer"], 2)}
                 for uname, v in units.items()
             ]
     ah_json_data = json.dumps(ah_js_data, ensure_ascii=False)
@@ -1134,15 +1135,17 @@ def generate_html(data):
     def _build_ah_cards(year_filter=None):
         cards = []
         for haus_name, year_units in sorted(haus_year_data.items()):
-            unit_totals = defaultdict(lambda: {"buchungen": 0, "umsatz": 0.0})
+            unit_totals = defaultdict(lambda: {"buchungen": 0, "umsatz": 0.0, "miete_eigentuemer": 0.0})
             for y, units in year_units.items():
                 if year_filter and y != year_filter:
                     continue
                 for uname, v in units.items():
                     unit_totals[uname]["buchungen"] += v["buchungen"]
                     unit_totals[uname]["umsatz"] += v["umsatz"]
+                    unit_totals[uname]["miete_eigentuemer"] += v["miete_eigentuemer"]
             gb = sum(v["buchungen"] for v in unit_totals.values())
             gu = sum(v["umsatz"] for v in unit_totals.values())
+            gme = sum(v["miete_eigentuemer"] for v in unit_totals.values())
             if gb == 0:
                 continue
             obj_count = len(unit_totals)
@@ -1151,26 +1154,42 @@ def generate_html(data):
             for uname, v in sorted(unit_totals.items(), key=lambda x: -x[1]["buchungen"]):
                 bar_pct = round(v["buchungen"] / max_b * 100)
                 umsatz_str = format_euro(v["umsatz"]) if v["umsatz"] > 0 else "–"
+                me_str = format_euro(v["miete_eigentuemer"]) if v["miete_eigentuemer"] > 0 else "–"
                 rows += f'''<tr>
                         <td class="ah-obj-name">{uname}</td>
                         <td class="ah-obj-bar"><div class="ah-bar-wrap"><div class="ah-bar" style="width:{bar_pct}%"></div><span class="ah-bar-label">{v["buchungen"]}</span></div></td>
                         <td class="ah-obj-umsatz">{umsatz_str}</td>
+                        <td class="ah-obj-me">{me_str}</td>
                     </tr>'''
-            umsatz_badge = f'<span class="ah-kpi-u">{format_euro(gu)}</span>' if gu > 0 else ""
+            rows += f'''<tr class="ah-total-row">
+                        <td class="ah-obj-name"><strong>Gesamt</strong></td>
+                        <td class="ah-obj-bar"><strong>{gb} Buchungen</strong></td>
+                        <td class="ah-obj-umsatz"><strong>{format_euro(gu)}</strong></td>
+                        <td class="ah-obj-me"><strong>{format_euro(gme)}</strong></td>
+                    </tr>'''
             suffix = "en" if obj_count != 1 else ""
-            cards.append((gb, gu, haus_name, f'''<div class="ah-card" data-buchungen="{gb}" data-umsatz="{round(gu,2)}" data-name="{haus_name}">
+            cards.append((gb, gu, gme, haus_name, f'''<div class="ah-card" data-buchungen="{gb}" data-umsatz="{round(gu,2)}" data-me="{round(gme,2)}" data-name="{haus_name}">
                     <div class="ah-header">
                         <span class="ah-name">{haus_name}</span>
                         <span class="ah-kpi-row">
                             <span class="ah-kpi-b">{gb} Buchungen</span>
-                            {umsatz_badge}
+                            <span class="ah-kpi-u">{format_euro(gu)}</span>
+                            <span class="ah-kpi-me">Eig.: {format_euro(gme)}</span>
                             <span class="ah-kpi-n">{obj_count} Unterkunft{suffix}</span>
                         </span>
                     </div>
-                    <table class="ah-obj-table"><tbody>{rows}</tbody></table>
+                    <table class="ah-obj-table">
+                        <thead><tr>
+                            <th class="ah-th-name">Unterkunft</th>
+                            <th class="ah-th-bar">Buchungen</th>
+                            <th class="ah-th-num">Reisepreis</th>
+                            <th class="ah-th-num">Miete Eig.</th>
+                        </tr></thead>
+                        <tbody>{rows}</tbody>
+                    </table>
                 </div>'''))
         cards.sort(key=lambda x: -x[0])
-        return "\n".join(c[3] for c in cards)
+        return "\n".join(c[4] for c in cards)
 
     ah_cards_html = _build_ah_cards()
 
@@ -1181,23 +1200,40 @@ def generate_html(data):
     )
 
     apartmenthaus_tab_html = f'''<div class="chart-container">
-        <h3>Apartmenthäuser – Buchungsvergleich</h3>
-        <p style="color:var(--color-text-muted);font-size:13px;margin-bottom:14px;">Buchungen und Reisepreis-Umsatz je Apartmenthaus, aufgeschlüsselt nach Unterkunft.</p>
+        <h3>Apartmenthäuser – Gesamtsummen &amp; Buchungsvergleich</h3>
+        <p style="color:var(--color-text-muted);font-size:13px;margin-bottom:14px;">Reisepreis und Miete Eigentümer je Apartmenthaus, aufgeschlüsselt nach Unterkunft.</p>
         <div class="ah-filter-row">
             {ah_year_btns}
             <button class="ah-yr-btn ah-yr-all active" onclick="ahFilter(null,this)">Alle Jahre</button>
             <span style="margin-left:auto;font-size:13px;color:var(--color-text-muted);">Sortieren:
             <select id="ahSort" onchange="ahSort(this.value)" style="border:1px solid var(--color-border);border-radius:6px;padding:3px 8px;font-size:13px;">
                 <option value="buchungen">Buchungen ↓</option>
-                <option value="umsatz">Umsatz ↓</option>
+                <option value="umsatz">Reisepreis ↓</option>
+                <option value="me">Miete Eig. ↓</option>
                 <option value="name">Name A–Z</option>
             </select></span>
         </div>
         <div class="ah-kpi-summary" id="ahKpiRow">
             <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiHaeuser">–</div><div class="ah-summary-lbl">Häuser</div></div>
             <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiBuchungen">–</div><div class="ah-summary-lbl">Buchungen</div></div>
-            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiUmsatz">–</div><div class="ah-summary-lbl">Umsatz</div></div>
+            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiUmsatz">–</div><div class="ah-summary-lbl">Reisepreis gesamt</div></div>
+            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiMe" style="color:#065f46;">–</div><div class="ah-summary-lbl">Miete Eigentümer gesamt</div></div>
         </div>
+        <div class="ah-overview-wrap">
+            <h4 style="font-size:13px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Gesamtübersicht alle Häuser</h4>
+            <table class="ah-overview-table" id="ahOverviewTable">
+                <thead><tr>
+                    <th>Haus</th>
+                    <th class="ah-ov-num">Buchungen</th>
+                    <th class="ah-ov-num">Reisepreis</th>
+                    <th class="ah-ov-num">Miete Eig.</th>
+                    <th class="ah-ov-num">Eig.-Anteil</th>
+                </tr></thead>
+                <tbody id="ahOverviewBody"></tbody>
+                <tfoot id="ahOverviewFoot"></tfoot>
+            </table>
+        </div>
+        <h4 style="font-size:13px;font-weight:600;color:var(--color-text-muted);margin:18px 0 10px;text-transform:uppercase;letter-spacing:.5px;">Detailansicht je Haus</h4>
         <div class="ah-grid" id="ahGrid">
             {ah_cards_html}
         </div>
@@ -1206,27 +1242,42 @@ def generate_html(data):
         .ah-filter-row {{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }}
         .ah-yr-btn {{ padding:4px 13px; border:1px solid var(--color-border); border-radius:16px; background:#fff; cursor:pointer; font-size:12px; color:#555; transition:all .15s; }}
         .ah-yr-btn.active, .ah-yr-btn:hover {{ background:var(--color-primary); color:#fff; border-color:var(--color-primary); }}
-        .ah-kpi-summary {{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }}
+        .ah-kpi-summary {{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }}
         .ah-summary-kpi {{ background:var(--color-bg); border-radius:var(--radius-sm); padding:10px; text-align:center; }}
-        .ah-summary-val {{ font-size:22px; font-weight:700; color:var(--color-primary); }}
+        .ah-summary-val {{ font-size:20px; font-weight:700; color:var(--color-primary); }}
         .ah-summary-lbl {{ font-size:11px; color:var(--color-text-muted); margin-top:2px; }}
-        .ah-grid {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(400px,1fr)); gap:14px; }}
+        .ah-overview-wrap {{ background:#fff; border-radius:var(--radius-sm); padding:14px; box-shadow:var(--shadow-card); margin-bottom:18px; overflow-x:auto; }}
+        .ah-overview-table {{ width:100%; border-collapse:collapse; font-size:13px; }}
+        .ah-overview-table th {{ background:var(--color-bg); color:var(--color-text-muted); font-size:11px; text-transform:uppercase; letter-spacing:.4px; padding:6px 10px; text-align:left; }}
+        .ah-ov-num {{ text-align:right !important; font-variant-numeric:tabular-nums; }}
+        .ah-overview-table td {{ padding:6px 10px; border-bottom:1px solid var(--color-border); }}
+        .ah-overview-table tbody tr:hover {{ background:#f8fafc; }}
+        .ah-overview-table tfoot td {{ padding:8px 10px; border-top:2px solid var(--color-primary); font-weight:700; background:var(--color-bg); }}
+        .ah-ov-me {{ color:#065f46; font-weight:600; }}
+        .ah-ov-pct {{ color:#888; font-size:12px; }}
+        .ah-grid {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:14px; }}
         .ah-card {{ background:#fff; border-radius:var(--radius-sm); padding:14px; box-shadow:var(--shadow-card); }}
         .ah-header {{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:8px; }}
         .ah-name {{ font-weight:600; font-size:13px; color:var(--color-text); flex:1; }}
         .ah-kpi-row {{ display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end; }}
         .ah-kpi-b {{ background:#dbeafe; color:#1e40af; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:600; }}
-        .ah-kpi-u {{ background:#d1fae5; color:#065f46; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:600; }}
+        .ah-kpi-u {{ background:#fef9c3; color:#854d0e; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:600; }}
+        .ah-kpi-me {{ background:#d1fae5; color:#065f46; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:600; }}
         .ah-kpi-n {{ background:var(--color-bg); color:#555; padding:2px 7px; border-radius:10px; font-size:11px; }}
         .ah-obj-table {{ width:100%; border-collapse:collapse; }}
-        .ah-obj-table tr:not(:last-child) td {{ border-bottom:1px solid var(--color-border); }}
+        .ah-th-name,.ah-th-bar,.ah-th-num {{ font-size:10px; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.4px; padding:4px 3px; border-bottom:1px solid var(--color-border); }}
+        .ah-th-num {{ text-align:right; }}
+        .ah-obj-table tbody tr:not(.ah-total-row):not(:last-child) td {{ border-bottom:1px solid var(--color-border); }}
+        .ah-total-row td {{ border-top:2px solid var(--color-primary) !important; background:var(--color-bg); padding:5px 3px; }}
         .ah-obj-table td {{ padding:4px 3px; vertical-align:middle; }}
-        .ah-obj-name {{ font-size:12px; color:var(--color-text); width:34%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
-        .ah-obj-bar {{ width:51%; padding-right:6px; }}
-        .ah-obj-umsatz {{ font-size:11px; color:var(--color-text-muted); text-align:right; white-space:nowrap; width:15%; }}
+        .ah-obj-name {{ font-size:12px; color:var(--color-text); width:28%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
+        .ah-obj-bar {{ width:36%; padding-right:6px; }}
+        .ah-obj-umsatz {{ font-size:11px; color:#854d0e; text-align:right; white-space:nowrap; width:18%; }}
+        .ah-obj-me {{ font-size:11px; color:#065f46; text-align:right; white-space:nowrap; width:18%; font-weight:500; }}
         .ah-bar-wrap {{ display:flex; align-items:center; gap:5px; }}
         .ah-bar {{ height:11px; background:var(--color-primary); border-radius:3px; min-width:3px; }}
         .ah-bar-label {{ font-size:11px; color:var(--color-text); white-space:nowrap; }}
+        @media(max-width:700px) {{ .ah-kpi-summary {{ grid-template-columns:repeat(2,1fr); }} .ah-grid {{ grid-template-columns:1fr; }} }}
     </style>
     <script>
     (function() {{
@@ -1235,8 +1286,13 @@ def generate_html(data):
         let currentYear = null;
 
         function fmtEur(v) {{
-            return v.toLocaleString('de-DE',{{minimumFractionDigits:0,maximumFractionDigits:0}}) + ' \u20ac';
+            return v.toLocaleString('de-DE',{{minimumFractionDigits:0,maximumFractionDigits:0}}) + ' €';
         }}
+        function pct(a, b) {{
+            if (!b) return '–';
+            return Math.round(a / b * 100) + ' %';
+        }}
+
         function updateCards(year) {{
             currentYear = year;
             const grid = document.getElementById('ahGrid');
@@ -1244,58 +1300,95 @@ def generate_html(data):
             let cards = [];
             for (const [hausName, yearData] of Object.entries(AH_DATA)) {{
                 let units = {{}};
-                const yrs = year ? [year] : AH_YEARS;
+                const yrs = year ? [String(year)] : AH_YEARS.map(String);
                 yrs.forEach(y => {{
                     (yearData[y] || []).forEach(u => {{
-                        if (!units[u.name]) units[u.name] = {{buchungen:0, umsatz:0}};
+                        if (!units[u.name]) units[u.name] = {{buchungen:0, umsatz:0, miete_eigentuemer:0}};
                         units[u.name].buchungen += u.buchungen;
                         units[u.name].umsatz += u.umsatz;
+                        units[u.name].miete_eigentuemer += (u.miete_eigentuemer || 0);
                     }});
                 }});
                 const gb = Object.values(units).reduce((s,u) => s + u.buchungen, 0);
                 const gu = Object.values(units).reduce((s,u) => s + u.umsatz, 0);
+                const gme = Object.values(units).reduce((s,u) => s + u.miete_eigentuemer, 0);
                 if (gb === 0) continue;
-                cards.push({{hausName, units, gb, gu}});
+                cards.push({{hausName, units, gb, gu, gme}});
             }}
-            // Sort
             if (sortVal === 'buchungen') cards.sort((a,b) => b.gb - a.gb);
             else if (sortVal === 'umsatz') cards.sort((a,b) => b.gu - a.gu);
+            else if (sortVal === 'me') cards.sort((a,b) => b.gme - a.gme);
             else cards.sort((a,b) => a.hausName.localeCompare(b.hausName, 'de'));
 
-            // Render
+            const tbody = document.getElementById('ahOverviewBody');
+            const tfoot = document.getElementById('ahOverviewFoot');
+            let totB=0, totU=0, totMe=0;
+            tbody.innerHTML = cards.map(c => {{
+                totB += c.gb; totU += c.gu; totMe += c.gme;
+                const p = pct(c.gme, c.gu);
+                return `<tr>
+                    <td>${{c.hausName}}</td>
+                    <td class="ah-ov-num">${{c.gb.toLocaleString('de-DE')}}</td>
+                    <td class="ah-ov-num">${{fmtEur(c.gu)}}</td>
+                    <td class="ah-ov-num ah-ov-me">${{fmtEur(c.gme)}}</td>
+                    <td class="ah-ov-num ah-ov-pct">${{p}}</td>
+                </tr>`;
+            }}).join('');
+            tfoot.innerHTML = `<tr>
+                <td><strong>Gesamt (${{cards.length}} Häuser)</strong></td>
+                <td class="ah-ov-num"><strong>${{totB.toLocaleString('de-DE')}}</strong></td>
+                <td class="ah-ov-num"><strong>${{fmtEur(totU)}}</strong></td>
+                <td class="ah-ov-num ah-ov-me"><strong>${{fmtEur(totMe)}}</strong></td>
+                <td class="ah-ov-num ah-ov-pct"><strong>${{pct(totMe, totU)}}</strong></td>
+            </tr>`;
+
             grid.innerHTML = cards.map(c => {{
                 const maxB = Math.max(...Object.values(c.units).map(u => u.buchungen), 1);
                 const rowsSorted = Object.entries(c.units).sort((a,b) => b[1].buchungen - a[1].buchungen);
                 const rows = rowsSorted.map(([uname, v]) => {{
                     const barPct = Math.round(v.buchungen / maxB * 100);
-                    const uStr = v.umsatz > 0 ? fmtEur(v.umsatz) : '\u2013';
+                    const uStr = v.umsatz > 0 ? fmtEur(v.umsatz) : '–';
+                    const meStr = v.miete_eigentuemer > 0 ? fmtEur(v.miete_eigentuemer) : '–';
                     return `<tr>
-                        <td class="ah-obj-name">${{uname}}</td>
+                        <td class="ah-obj-name" title="${{uname}}">${{uname}}</td>
                         <td class="ah-obj-bar"><div class="ah-bar-wrap"><div class="ah-bar" style="width:${{barPct}}%"></div><span class="ah-bar-label">${{v.buchungen}}</span></div></td>
                         <td class="ah-obj-umsatz">${{uStr}}</td>
+                        <td class="ah-obj-me">${{meStr}}</td>
                     </tr>`;
                 }}).join('');
+                const totalRow = `<tr class="ah-total-row">
+                    <td class="ah-obj-name"><strong>Gesamt</strong></td>
+                    <td class="ah-obj-bar"><strong>${{c.gb}} Buchungen</strong></td>
+                    <td class="ah-obj-umsatz"><strong>${{fmtEur(c.gu)}}</strong></td>
+                    <td class="ah-obj-me"><strong>${{fmtEur(c.gme)}}</strong></td>
+                </tr>`;
                 const n = Object.keys(c.units).length;
-                const uBadge = c.gu > 0 ? `<span class="ah-kpi-u">${{fmtEur(c.gu)}}</span>` : '';
                 return `<div class="ah-card">
                     <div class="ah-header">
                         <span class="ah-name">${{c.hausName}}</span>
                         <span class="ah-kpi-row">
                             <span class="ah-kpi-b">${{c.gb}} Buchungen</span>
-                            ${{uBadge}}
+                            <span class="ah-kpi-u">${{fmtEur(c.gu)}}</span>
+                            <span class="ah-kpi-me">Eig.: ${{fmtEur(c.gme)}}</span>
                             <span class="ah-kpi-n">${{n}} Unterkunft${{n!==1?'en':''}}</span>
                         </span>
                     </div>
-                    <table class="ah-obj-table"><tbody>${{rows}}</tbody></table>
+                    <table class="ah-obj-table">
+                        <thead><tr>
+                            <th class="ah-th-name">Unterkunft</th>
+                            <th class="ah-th-bar">Buchungen</th>
+                            <th class="ah-th-num">Reisepreis</th>
+                            <th class="ah-th-num">Miete Eig.</th>
+                        </tr></thead>
+                        <tbody>${{rows}}${{totalRow}}</tbody>
+                    </table>
                 </div>`;
             }}).join('\\n');
 
-            // Update KPIs
-            const totB = cards.reduce((s,c) => s+c.gb, 0);
-            const totU = cards.reduce((s,c) => s+c.gu, 0);
             document.getElementById('ahKpiHaeuser').textContent = cards.length;
             document.getElementById('ahKpiBuchungen').textContent = totB.toLocaleString('de-DE');
             document.getElementById('ahKpiUmsatz').textContent = fmtEur(totU);
+            document.getElementById('ahKpiMe').textContent = fmtEur(totMe);
         }}
 
         window.ahFilter = function(year, btn) {{
@@ -1305,7 +1398,6 @@ def generate_html(data):
         }};
         window.ahSort = function(val) {{ updateCards(currentYear); }};
 
-        // Initial render
         updateCards(null);
     }})();
     </script>'''
