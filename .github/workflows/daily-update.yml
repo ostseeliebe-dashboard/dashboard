@@ -38,7 +38,7 @@ jobs:
 
       # -- 3. Abhaengigkeiten installieren --
       - name: Abhaengigkeiten installieren
-        run: pip install requests openpyxl
+        run: pip install requests pandas openpyxl beautifulsoup4
 
       # -- 4. Buchungsdaten aus Contao herunterladen --
       - name: Buchungsdaten aus Contao herunterladen
@@ -47,8 +47,8 @@ jobs:
           CONTAO_USER: ${{ secrets.CONTAO_USER }}
           CONTAO_PASS: ${{ secrets.CONTAO_PASS }}
         run: |
-          python fetch_bookings.py \
-            --from 01.01.2020 \
+          python fetch_contao_data.py \
+            --from 01.01.2017 \
             --to $(date -d "+730 days" +%d.%m.%Y) \
             --out buchungen_export_2027.csv
 
