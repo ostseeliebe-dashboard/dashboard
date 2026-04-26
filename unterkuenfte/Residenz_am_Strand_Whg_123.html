@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Residenz am Strand, Whg 123 – Umsatzübersicht</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f5f7fa; color:#333; }
+        .header { background:linear-gradient(135deg,#0066cc,#00aaaa); color:white; padding:30px 40px; }
+        .header h1 { font-size:24px; margin-bottom:4px; }
+        .header .sub { opacity:0.85; font-size:13px; }
+        .container { max-width:1100px; margin:0 auto; padding:24px 20px; }
+        .section { background:white; border-radius:12px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:20px; }
+        .section h2 { color:#0066cc; font-size:20px; border-bottom:2px solid #e0e0e0; padding-bottom:6px; margin-bottom:16px; }
+        .kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:16px; }
+        .kpi { background:#f8fafc; border-radius:10px; padding:14px; text-align:center; }
+        .kl { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+        .kv { font-size:17px; font-weight:700; color:#0066cc; }
+        .kv.green { color:#2e7d32; }
+        .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        h3 { font-size:14px; margin-bottom:8px; color:#555; }
+        table { width:100%; border-collapse:collapse; font-size:13px; }
+        th { background:#e8f0fe; color:#0066cc; font-weight:600; padding:8px 10px; text-align:left; }
+        td { padding:6px 10px; border-bottom:1px solid #f0f0f0; }
+        .num { text-align:right; font-variant-numeric:tabular-nums; }
+        .sub { color:#888; font-size:12px; }
+        .chart-section { background:white; border-radius:12px; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:20px; }
+        .chart-section h3 { font-size:16px; color:#333; margin-bottom:12px; }
+        @media(max-width:800px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } .two-col { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Residenz am Strand, Whg 123</h1>
+        <div class="sub">Zingst — Umsatzübersicht — Stand 26.04.2026 06:30</div>
+    </div>
+    <div class="container">
+        <div class="chart-section">
+            <h3>Jahresvergleich – Reisepreis & Miete Eigentümer</h3>
+            <canvas id="yearChart" style="max-height:300px;"></canvas>
+        </div>
+        
+        <div class="section">
+            <h2>2020</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">11</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">83</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">8.405,70 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">7.068,00 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">5.735,40 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">1.332,60 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">18,9 %</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">101,27 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">7,5 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">22,7 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>zu bearbeiten</td><td class="num">11</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <table><thead><tr><th>Kategorie</th><th class='num'>Gesamt</th><th class='num sub'>Vermittler</th><th class='num sub'>Eigent.</th></tr></thead><tbody><tr><td>01. Endreinigung</td><td class="num">687,62 €</td><td class="num sub">627,62 €</td><td class="num sub">60,00 €</td></tr><tr><td>06. Nebenkosten (obligatorisch)</td><td class="num">588,00 €</td><td class="num sub">588,00 €</td><td class="num sub">0,00 €</td></tr><tr><td>02. Zusatzleistungen (buchbar)</td><td class="num">11,90 €</td><td class="num sub">11,90 €</td><td class="num sub">0,00 €</td></tr><tr style="background:#f5f7fa;border-top:2px solid #0066cc;"><td><strong>Summe</strong></td><td class="num"><strong>1.287,52 €</strong></td><td class="num sub"><strong>1.227,52 €</strong></td><td class="num sub"><strong>60,00 €</strong></td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h2>2021</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">14</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">110</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">14.601,26 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">11.060,00 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">8.822,55 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">2.237,45 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">20,2 %</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">132,74 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">7,9 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">30,1 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>zu bearbeiten</td><td class="num">14</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <table><thead><tr><th>Kategorie</th><th class='num'>Gesamt</th><th class='num sub'>Vermittler</th><th class='num sub'>Eigent.</th></tr></thead><tbody><tr><td>01. Endreinigung</td><td class="num">1.053,20 €</td><td class="num sub">1.053,20 €</td><td class="num sub">0,00 €</td></tr><tr><td>Kurzbucherzuschlag</td><td class="num">835,82 €</td><td class="num sub">49,50 €</td><td class="num sub">786,32 €</td></tr><tr><td>06. Nebenkosten (obligatorisch)</td><td class="num">629,00 €</td><td class="num sub">629,00 €</td><td class="num sub">0,00 €</td></tr><tr><td>Stornogebühren</td><td class="num">105,80 €</td><td class="num sub">0,00 €</td><td class="num sub">105,80 €</td></tr><tr><td>05. Zusatzleistungen (inklusive)</td><td class="num">-5,80 €</td><td class="num sub">0,00 €</td><td class="num sub">-5,80 €</td></tr><tr style="background:#f5f7fa;border-top:2px solid #0066cc;"><td><strong>Summe</strong></td><td class="num"><strong>2.618,02 €</strong></td><td class="num sub"><strong>1.731,70 €</strong></td><td class="num sub"><strong>886,32 €</strong></td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h2>2022</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">15</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">133</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">16.093,60 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">12.466,50 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">9.944,52 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">2.521,98 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">20,2 %</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">121,00 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">8,9 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">36,4 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>zu bearbeiten</td><td class="num">13</td></tr><tr><td>Telefon</td><td class="num">1</td></tr><tr><td>Webseite</td><td class="num">1</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <table><thead><tr><th>Kategorie</th><th class='num'>Gesamt</th><th class='num sub'>Vermittler</th><th class='num sub'>Eigent.</th></tr></thead><tbody><tr><td>01. Endreinigung</td><td class="num">1.215,92 €</td><td class="num sub">1.215,92 €</td><td class="num sub">0,00 €</td></tr><tr><td>06. Nebenkosten (obligatorisch)</td><td class="num">1.031,18 €</td><td class="num sub">1.150,93 €</td><td class="num sub">-119,75 €</td></tr><tr><td>Kurzbucherzuschlag</td><td class="num">709,15 €</td><td class="num sub">0,00 €</td><td class="num sub">709,15 €</td></tr><tr><td>Stornogebühren</td><td class="num">453,60 €</td><td class="num sub">0,00 €</td><td class="num sub">453,60 €</td></tr><tr style="background:#f5f7fa;border-top:2px solid #0066cc;"><td><strong>Summe</strong></td><td class="num"><strong>3.409,85 €</strong></td><td class="num sub"><strong>2.366,85 €</strong></td><td class="num sub"><strong>1.043,00 €</strong></td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h2>2023</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">17</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">139</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">15.865,88 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">12.775,35 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">10.190,89 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">2.584,46 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">20,2 %</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">114,14 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">8,2 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">38,1 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>Webseite</td><td class="num">11</td></tr><tr><td>Booking.com BV</td><td class="num">3</td></tr><tr><td>Telefon</td><td class="num">2</td></tr><tr><td>E-Mail</td><td class="num">1</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <table><thead><tr><th>Kategorie</th><th class='num'>Gesamt</th><th class='num sub'>Vermittler</th><th class='num sub'>Eigent.</th></tr></thead><tbody><tr><td>01. Endreinigung</td><td class="num">1.422,76 €</td><td class="num sub">1.422,76 €</td><td class="num sub">0,00 €</td></tr><tr><td>06. Nebenkosten (obligatorisch)</td><td class="num">912,51 €</td><td class="num sub">1.036,36 €</td><td class="num sub">-123,85 €</td></tr><tr><td>Stornogebühren</td><td class="num">458,25 €</td><td class="num sub">0,00 €</td><td class="num sub">458,25 €</td></tr><tr><td>Kurzbucherzuschlag</td><td class="num">360,16 €</td><td class="num sub">0,00 €</td><td class="num sub">360,16 €</td></tr><tr><td>03. Zusatzleistungen (nur von Ostseeliebe buchbar)</td><td class="num">-300,00 €</td><td class="num sub">-60,69 €</td><td class="num sub">-239,31 €</td></tr><tr><td>02. Zusatzleistungen (buchbar)</td><td class="num">113,00 €</td><td class="num sub">113,00 €</td><td class="num sub">0,00 €</td></tr><tr style="background:#f5f7fa;border-top:2px solid #0066cc;"><td><strong>Summe</strong></td><td class="num"><strong>2.966,68 €</strong></td><td class="num sub"><strong>2.511,43 €</strong></td><td class="num sub"><strong>455,25 €</strong></td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h2>2024</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">19</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">142</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">17.589,28 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">13.460,15 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">10.737,17 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">2.722,98 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">20,2 %</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">123,87 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">7,5 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">38,9 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>Webseite</td><td class="num">14</td></tr><tr><td>Booking.com BV</td><td class="num">3</td></tr><tr><td>Telefon</td><td class="num">2</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <table><thead><tr><th>Kategorie</th><th class='num'>Gesamt</th><th class='num sub'>Vermittler</th><th class='num sub'>Eigent.</th></tr></thead><tbody><tr><td>01. Endreinigung</td><td class="num">1.763,88 €</td><td class="num sub">1.763,88 €</td><td class="num sub">0,00 €</td></tr><tr><td>06. Nebenkosten (obligatorisch)</td><td class="num">1.193,05 €</td><td class="num sub">1.354,89 €</td><td class="num sub">-161,84 €</td></tr><tr><td>Stornogebühren</td><td class="num">584,20 €</td><td class="num sub">0,00 €</td><td class="num sub">584,20 €</td></tr><tr><td>Kurzbucherzuschlag</td><td class="num">426,16 €</td><td class="num sub">0,00 €</td><td class="num sub">426,16 €</td></tr><tr style="background:#f5f7fa;border-top:2px solid #0066cc;"><td><strong>Summe</strong></td><td class="num"><strong>3.967,29 €</strong></td><td class="num sub"><strong>3.118,77 €</strong></td><td class="num sub"><strong>848,52 €</strong></td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h2>2025</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">25</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">175</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">20.395,56 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">15.446,30 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">12.321,49 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">3.124,81 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">20,2 %</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">116,55 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">7,0 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">47,9 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>Webseite</td><td class="num">21</td></tr><tr><td>Büro</td><td class="num">2</td></tr><tr><td>Booking.com BV</td><td class="num">1</td></tr><tr><td>Buchungsanfrage</td><td class="num">1</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <table><thead><tr><th>Kategorie</th><th class='num'>Gesamt</th><th class='num sub'>Vermittler</th><th class='num sub'>Eigent.</th></tr></thead><tbody><tr><td>01. Endreinigung</td><td class="num">2.292,96 €</td><td class="num sub">2.292,96 €</td><td class="num sub">0,00 €</td></tr><tr><td>06. Nebenkosten (obligatorisch)</td><td class="num">1.523,95 €</td><td class="num sub">1.728,63 €</td><td class="num sub">-204,68 €</td></tr><tr><td>Stornogebühren</td><td class="num">693,45 €</td><td class="num sub">0,00 €</td><td class="num sub">693,45 €</td></tr><tr><td>Kurzbucherzuschlag</td><td class="num">110,22 €</td><td class="num sub">0,00 €</td><td class="num sub">110,22 €</td></tr><tr><td>02. Zusatzleistungen (buchbar)</td><td class="num">8,00 €</td><td class="num sub">8,00 €</td><td class="num sub">0,00 €</td></tr><tr style="background:#f5f7fa;border-top:2px solid #0066cc;"><td><strong>Summe</strong></td><td class="num"><strong>4.628,58 €</strong></td><td class="num sub"><strong>4.029,59 €</strong></td><td class="num sub"><strong>598,99 €</strong></td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h2>2026</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">3</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">18</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">1.842,47 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">1.120,00 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">893,42 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">226,58 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">20,2 %</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">102,36 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">6,0 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">4,9 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>Webseite</td><td class="num">2</td></tr><tr><td>holidu</td><td class="num">1</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <table><thead><tr><th>Kategorie</th><th class='num'>Gesamt</th><th class='num sub'>Vermittler</th><th class='num sub'>Eigent.</th></tr></thead><tbody><tr><td>01. Endreinigung</td><td class="num">285,00 €</td><td class="num sub">285,00 €</td><td class="num sub">0,00 €</td></tr><tr><td>06. Nebenkosten (obligatorisch)</td><td class="num">214,44 €</td><td class="num sub">243,00 €</td><td class="num sub">-28,56 €</td></tr><tr><td>Stornogebühren</td><td class="num">90,00 €</td><td class="num sub">0,00 €</td><td class="num sub">90,00 €</td></tr><tr><td>Kurzbucherzuschlag</td><td class="num">84,47 €</td><td class="num sub">0,00 €</td><td class="num sub">84,47 €</td></tr><tr style="background:#f5f7fa;border-top:2px solid #0066cc;"><td><strong>Summe</strong></td><td class="num"><strong>673,91 €</strong></td><td class="num sub"><strong>528,00 €</strong></td><td class="num sub"><strong>145,91 €</strong></td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        new Chart(document.getElementById('yearChart'), {
+            type: 'bar',
+            data: {
+                labels: [2020, 2021, 2022, 2023, 2024, 2025, 2026],
+                datasets: [
+                    { label: 'Reisepreis', data: [8405.7, 14601.26, 16093.6, 15865.88, 17589.28, 20395.56, 1842.47], backgroundColor: '#0066cc', borderRadius: 4 },
+                    { label: 'Miete Eigentümer', data: [5735.4, 8822.55, 9944.52, 10190.89, 10737.17, 12321.49, 893.42], backgroundColor: '#00aaaa', borderRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(c.raw); } } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: function(v) { return new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(v); } }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
