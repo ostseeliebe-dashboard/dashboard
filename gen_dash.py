@@ -229,8 +229,9 @@ def read_bookings(csv_path):
             if not profiles:
                 profiles.append("Paare/Einzelreisende")
 
+            nr_raw = row[0].strip()
             bookings.append({
-                "objekt_nr": row[0].strip(),
+                "objekt_nr": nr_raw.split()[0] if nr_raw else "",
                 "unterkunft": row[1].strip(),
                 "ort": row[2].strip(),
                 "buchungsdatum": row[3].strip(),
@@ -537,7 +538,10 @@ def compute_data(bookings):
 
 def generate_html(data):
     """Generate the complete dashboard HTML."""
-    years = data["years"]
+    _all_years = data["years"]
+    MAIN_FROM = 2024
+    years = [y for y in _all_years if y >= MAIN_FROM]
+    years_archive = [y for y in _all_years if y < MAIN_FROM]
     kpis = data["kpis"]
     monthly_data = data["monthly_data"]
     monthly_count_data = data["monthly_count_data"]
@@ -893,7 +897,36 @@ def generate_html(data):
             </div>
         </div>''')
 
-    prov_tab_html = "\n".join(prov_tab_parts)
+    # --- Build Provisionen archive (2017-2023) as collapsible ---
+    prov_archive_parts = []
+    for y in sorted(years_archive, reverse=True):
+        k = kpis[y]
+        mv_total = k["miete_vermittler"]
+        mg_total = k["miete_gesamt"]
+        prov_rate_avg = round(mv_total / mg_total * 100, 1) if mg_total > 0 else 0
+        zk_verm_year = zusatz_year_totals[y]["vermittler"]
+        prov_incl_zk = mv_total + zk_verm_year
+        prov_archive_parts.append(f'''
+        <div class="prop-section">
+            <h4 style="color:#888;border-bottom:1px solid #e0e0e0;padding-bottom:6px;font-size:16px;">{y}</h4>
+            <div class="prop-detail-grid" style="margin-bottom:12px;">
+                <div class="prop-kpi"><div class="pk-label">Miete Vermittler</div><div class="pk-value">{format_euro(mv_total)}</div></div>
+                <div class="prop-kpi"><div class="pk-label">+ Zusatzk. Vermittler</div><div class="pk-value">{format_euro(zk_verm_year)}</div></div>
+                <div class="prop-kpi"><div class="pk-label">Provision gesamt</div><div class="pk-value green">{format_euro(prov_incl_zk)}</div></div>
+                <div class="prop-kpi"><div class="pk-label">\u00d8 Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
+            </div>
+        </div>''')
+    archive_html = ""
+    if prov_archive_parts:
+        archive_html = (
+            '\n    <details style="margin-top:24px;">'
+            '\n        <summary style="cursor:pointer;font-weight:600;color:#888;padding:10px 0;border-top:2px solid #e0e0e0;">'
+            '\n            &#9654; Archiv 2017\u20132023'
+            '\n        </summary>'
+            + "".join(prov_archive_parts)
+            + '\n    </details>'
+        )
+    prov_tab_html = "\n".join(prov_tab_parts) + archive_html
 
     # --- Build Reiseprofile tab HTML ---
     # Stacked bar chart data: profiles per year
