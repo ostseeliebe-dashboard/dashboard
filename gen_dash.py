@@ -22,8 +22,8 @@ except ImportError:
 # ---------------------------------------------------------------------------
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Default paths - can be overridden via command-line args
-DEFAULT_CSV = os.path.expanduser("~/Claude_14.04.2026/buchungen_export_2027.csv")
-DEFAULT_OUT = os.path.expanduser("~/Claude_14.04.2026/ostseeliebe-dashboard.html")
+DEFAULT_CSV = "buchungen_export_2027.csv"
+DEFAULT_OUT = "index.html"
 
 # ---------------------------------------------------------------------------
 # Apartmenthaus → Unterkunft Mapping (Objekt-Nummern aus Contao)
