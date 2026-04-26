@@ -3,8 +3,8 @@
 # Taeglich um 06:00 Uhr:
 #   1. Buchungs-CSV aus Contao herunterladen
 #   2. Dashboard neu generieren (gen_dash.py)
-#   3. Apartmenthaus-Tab neu generieren (gen_apartmenthaus.py)
-#   4. Geaenderte HTML-Dateien committen und pushen
+#      (inkl. Apartmenthaus-Tab - direkt integriert)
+#   3. Geaenderte HTML-Dateien committen und pushen
 #
 # Benoetigte GitHub Secrets (Settings -> Secrets -> Actions):
 #   CONTAO_URL   https://www.ostseeliebe-ferienwohnungen.de
@@ -36,22 +36,23 @@ jobs:
         with:
           python-version: "3.11"
 
+      # -- 3. Abhaengigkeiten installieren --
       - name: Abhaengigkeiten installieren
-        run: pip install requests pandas openpyxl beautifulsoup4
+        run: pip install requests openpyxl
 
-      # -- 3. Buchungs-CSV aus Contao laden --
+      # -- 4. Buchungsdaten aus Contao herunterladen --
       - name: Buchungsdaten aus Contao herunterladen
         env:
           CONTAO_URL:  ${{ secrets.CONTAO_URL }}
           CONTAO_USER: ${{ secrets.CONTAO_USER }}
           CONTAO_PASS: ${{ secrets.CONTAO_PASS }}
         run: |
-          python fetch_contao_data.py \
-            --from 01.01.2017 \
+          python fetch_bookings.py \
+            --from 01.01.2020 \
             --to $(date -d "+730 days" +%d.%m.%Y) \
             --out buchungen_export_2027.csv
 
-      # -- 4. Objektstammdaten aus Contao laden --
+      # -- 5. Objektstammdaten aus Contao laden --
       - name: Objektstammdaten aus Contao laden
         env:
           CONTAO_URL:  ${{ secrets.CONTAO_URL }}
@@ -61,29 +62,21 @@ jobs:
           python fetch_property_data.py --out Objektstammdaten.xlsx
         continue-on-error: true   # Dashboard funktioniert auch ohne (nur ohne Stammdaten)
 
-      # -- 5. Dashboard generieren --
+      # -- 6. Dashboard generieren (inkl. Apartmenthaus-Tab) --
       - name: Dashboard generieren (gen_dash.py)
         run: python gen_dash.py
-
-      # -- 6. Apartmenthaus-Tab generieren --
-      - name: Apartmenthaus-Tab generieren
-        run: python gen_apartmenthaus.py --csv buchungen_export_2027.csv --output apartmenthaus_tab.html
 
       # -- 7. Passwortschutz anwenden --
       - name: Passwortschutz anwenden (protect_dashboard.py)
         run: python protect_dashboard.py
-        continue-on-error: true   # falls noch nicht eingerichtet
+        continue-on-error: true
 
-      # -- 8. Aenderungen committen und pushen --
+      # -- 8. Committen und pushen --
       - name: Aenderungen committen
         run: |
-          git config user.name  "Dashboard Bot"
-          git config user.email "bot@ostseeliebe-dashboard.github.io"
-          git add buchungen_export_2027.csv \
-                  Objektstammdaten.xlsx \
-                  apartmenthaus_tab.html \
-                  index.html \
-                  *.html 2>/dev/null || true
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
           # Nur committen wenn es wirklich Aenderungen gibt
           git diff --cached --quiet || \
             git commit -m "Automatisches Update $(date +'%d.%m.%Y %H:%M')"
