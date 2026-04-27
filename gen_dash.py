@@ -259,8 +259,9 @@ def compute_data(bookings):
     _next_year = _now.year + 1
 
     # --- Per-year KPIs ---
-    # Always include current year and next year, even if no bookings yet
+    # Always include previous year, current year and next year, even if no bookings yet
     _booking_years = set(b["anreise"].year for b in bookings)
+    _booking_years.add(_now.year - 1)
     _booking_years.add(_current_year)
     _booking_years.add(_next_year)
     years = sorted(_booking_years)
@@ -412,7 +413,7 @@ def compute_data(bookings):
         })
     zusatz_sorted.sort(key=lambda x: abs(x["total"]), reverse=True)
 
-    # Per-year Zusatzkosten totals (für Übersicht summary)
+    # Per-year Zusatzkosten totals (for Übersicht summary)
     zusatz_year_totals = {}
     for y in years:
         v_sum = sum(z["per_year"][y]["vermittler"] for z in zusatz_sorted)
@@ -551,11 +552,12 @@ def generate_html(data):
     _current_year = _dt.datetime.now().year
     _next_year = _current_year + 1
     _all_years = data["years"]
-    # Main view: only current year + next year (per user request to limit tokens)
-    # Archive: 2024 up to (but not including) current year
+    # Main view: previous year + current year + next year
+    # Archive: 2024 up to (but not including) previous year
+    _prev_year = _current_year - 1
     ARCHIVE_FROM = 2024
-    years = sorted([y for y in _all_years if y in (_current_year, _next_year)])
-    years_archive = sorted([y for y in _all_years if ARCHIVE_FROM <= y < _current_year])
+    years = sorted([y for y in _all_years if y in (_prev_year, _current_year, _next_year)])
+    years_archive = sorted([y for y in _all_years if ARCHIVE_FROM <= y < _prev_year])
     kpis = data["kpis"]
     monthly_data = data["monthly_data"]
     monthly_count_data = data["monthly_count_data"]
@@ -722,7 +724,7 @@ def generate_html(data):
                     <div class="kpi-value">{k["buchungen"]}</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Nächte</div>
+                    <div class="kpi-label">N\u00e4chte</div>
                     <div class="kpi-value">{format_german_number(k["naechte"], 0)}</div>
                 </div>
                 <div class="kpi-card">
@@ -734,7 +736,7 @@ def generate_html(data):
                     <div class="kpi-value">{format_euro(k["miete_gesamt"])}</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Miete Eigentümer</div>
+                    <div class="kpi-label">Miete Eigent\u00fcmer</div>
                     <div class="kpi-value">{format_euro(k["miete_eigentuemer"])}</div>
                 </div>
             </div>
@@ -745,7 +747,7 @@ def generate_html(data):
                             <th>Zusatzkosten</th>
                             <th class="zk-num">Gesamt</th>
                             <th class="zk-num zk-sub">Vermittler</th>
-                            <th class="zk-num zk-sub">Eigentümer</th>
+                            <th class="zk-num zk-sub">Eigent\u00fcmer</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -756,25 +758,6 @@ def generate_html(data):
             </div>
         </div>''')
     kpi_html = "\n".join(kpi_html_parts)
-    # --- Archive section for kpi (2024..current-1) ---
-    kpi_archive_parts = []
-    for y in sorted(years_archive, reverse=True):
-        k = kpis[y]
-        zt = zusatz_year_totals.get(y, {"vermittler": 0, "eigentuemer": 0, "gesamt": 0})
-        kpi_archive_parts.append(f'''<div class="year-section" style="opacity:0.75;">
-        <h3 style="color:#888;border-bottom:1px solid #ddd;padding-bottom:8px;">{y}</h3>
-        <div class="kpi-grid">
-            <div class="kpi-card"><div class="kpi-label">Buchungen</div><div class="kpi-value">{k["buchungen"]}</div></div>
-            <div class="kpi-card"><div class="kpi-label">N\u00e4chte</div><div class="kpi-value">{k["naechte"]:,.0f}</div></div>
-            <div class="kpi-card"><div class="kpi-label">Reisepreis</div><div class="kpi-value">{k["reisepreis"]:,.2f}\u00a0\u20ac</div></div>
-            <div class="kpi-card"><div class="kpi-label">Miete gesamt</div><div class="kpi-value">{k["miete_gesamt"]:,.2f}\u00a0\u20ac</div></div>
-            <div class="kpi-card"><div class="kpi-label">Miete Eigent\u00fcmer</div><div class="kpi-value">{k["miete_eigentuemer"]:,.2f}\u00a0\u20ac</div></div>
-        </div></div>''')
-    kpi_archive_html = ""
-    if kpi_archive_parts:
-        yr_range = f"{min(years_archive)}\u2013{max(years_archive)}"
-        kpi_archive_html = f'''<details style="margin-top:24px;"><summary style="cursor:pointer;font-size:16px;font-weight:600;color:#888;padding:8px 0;">&#9654; Archiv {yr_range}</summary>{"".join(kpi_archive_parts)}</details>'''
-    kpi_html = kpi_html + kpi_archive_html
 
     # --- Build comparison table HTML ---
     table_header = "<tr><th>Monat</th>" + "".join(f"<th>{y}</th>" for y in years) + "</tr>"
@@ -799,7 +782,7 @@ def generate_html(data):
     zusatz_detail_header = "<tr><th>Kategorie</th><th class='zk-num'>Anzahl</th>"
     for y in years_sorted:
         zusatz_detail_header += f"<th class='zk-num'>{y} Ges.</th><th class='zk-num zk-sub'>{y} Verm.</th><th class='zk-num zk-sub'>{y} Eig.</th>"
-    zusatz_detail_header += "<th class='zk-num'>Gesamt</th><th class='zk-num zk-sub'>Vermittler</th><th class='zk-num zk-sub'>Eigentümer</th></tr>"
+    zusatz_detail_header += "<th class='zk-num'>Gesamt</th><th class='zk-num zk-sub'>Vermittler</th><th class='zk-num zk-sub'>Eigent\u00fcmer</th></tr>"
 
     zusatz_detail_rows = ""
     for z in zusatz_sorted:
@@ -870,7 +853,7 @@ def generate_html(data):
                 <div class="prop-kpi"><div class="pk-label">Miete Vermittler</div><div class="pk-value">{format_euro(mv_total)}</div></div>
                 <div class="prop-kpi"><div class="pk-label">+ Zusatzk. Vermittler</div><div class="pk-value">{format_euro(zk_verm_year)}</div></div>
                 <div class="prop-kpi"><div class="pk-label">Provision gesamt</div><div class="pk-value green">{format_euro(prov_incl_zk)}</div></div>
-                <div class="prop-kpi"><div class="pk-label">Ø Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
+                <div class="prop-kpi"><div class="pk-label">\u00d8 Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
             </div>
             <div style="overflow-x:auto;">
             <table class="prov-table">
@@ -946,19 +929,18 @@ def generate_html(data):
                 <div class="prop-kpi"><div class="pk-label">Miete Vermittler</div><div class="pk-value">{format_euro(mv_total)}</div></div>
                 <div class="prop-kpi"><div class="pk-label">+ Zusatzk. Vermittler</div><div class="pk-value">{format_euro(zk_verm_year)}</div></div>
                 <div class="prop-kpi"><div class="pk-label">Provision gesamt</div><div class="pk-value green">{format_euro(prov_incl_zk)}</div></div>
-                <div class="prop-kpi"><div class="pk-label">\u00d8 Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
+                <div class="prop-kpi"><div class="pk-label">Ø Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
             </div>
         </div>''')
     archive_html = ""
     if prov_archive_parts:
-        archive_html = (
-            '\n    <details style="margin-top:24px;">'
-            '\n        <summary style="cursor:pointer;font-weight:600;color:#888;padding:10px 0;border-top:2px solid #e0e0e0;">'
-            '\n            &#9654; Archiv 2017\u20132023'
-            '\n        </summary>'
-            + "".join(prov_archive_parts)
-            + '\n    </details>'
-        )
+        archive_html = f'''
+    <details style="margin-top:24px;">
+        <summary style="cursor:pointer;font-weight:600;color:#888;padding:10px 0;border-top:2px solid #e0e0e0;list-style:none;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">&#9654;</span> Archiv 2017–2023
+        </summary>
+        {"".join(prov_archive_parts)}
+    </details>'''
     prov_tab_html = "\n".join(prov_tab_parts) + archive_html
 
     # --- Build Reiseprofile tab HTML ---
@@ -1183,7 +1165,7 @@ def generate_html(data):
     # The tab navigation and active-state logic are generated automatically.
     # ---------------------------------------------------------------------------
 
-    # --- Build Apartmenthäuser tab HTML ---
+    # --- Build Apartmenth\u00e4user tab HTML ---
     # Embed all years' data as JSON so the client can filter by year
     ah_json_years = json.dumps(years_sorted)
     # Build per-house data structure for JS
@@ -1219,14 +1201,15 @@ def generate_html(data):
             rows = ""
             for uname, v in sorted(unit_totals.items(), key=lambda x: -x[1]["buchungen"]):
                 bar_pct = round(v["buchungen"] / max_b * 100)
-                umsatz_str = format_euro(v["umsatz"]) if v["umsatz"] > 0 else "–"
-                me_str = format_euro(v["miete_eigentuemer"]) if v["miete_eigentuemer"] > 0 else "–"
+                umsatz_str = format_euro(v["umsatz"]) if v["umsatz"] > 0 else "\u2013"
+                me_str = format_euro(v["miete_eigentuemer"]) if v["miete_eigentuemer"] > 0 else "\u2013"
                 rows += f'''<tr>
                         <td class="ah-obj-name">{uname}</td>
                         <td class="ah-obj-bar"><div class="ah-bar-wrap"><div class="ah-bar" style="width:{bar_pct}%"></div><span class="ah-bar-label">{v["buchungen"]}</span></div></td>
                         <td class="ah-obj-umsatz">{umsatz_str}</td>
                         <td class="ah-obj-me">{me_str}</td>
                     </tr>'''
+            # Totals row
             rows += f'''<tr class="ah-total-row">
                         <td class="ah-obj-name"><strong>Gesamt</strong></td>
                         <td class="ah-obj-bar"><strong>{gb} Buchungen</strong></td>
@@ -1266,27 +1249,29 @@ def generate_html(data):
     )
 
     apartmenthaus_tab_html = f'''<div class="chart-container">
-        <h3>Apartmenthäuser – Gesamtsummen &amp; Buchungsvergleich</h3>
-        <p style="color:var(--color-text-muted);font-size:13px;margin-bottom:14px;">Reisepreis und Miete Eigentümer je Apartmenthaus, aufgeschlüsselt nach Unterkunft.</p>
+        <h3>Apartmenth\u00e4user \u2013 Gesamtsummen &amp; Buchungsvergleich</h3>
+        <p style="color:var(--color-text-muted);font-size:13px;margin-bottom:14px;">Reisepreis und Miete Eigent\u00fcmer je Apartmenthaus, aufgeschl\u00fcsselt nach Unterkunft.</p>
         <div class="ah-filter-row">
             {ah_year_btns}
             <button class="ah-yr-btn ah-yr-all active" onclick="ahFilter(null,this)">Alle Jahre</button>
             <span style="margin-left:auto;font-size:13px;color:var(--color-text-muted);">Sortieren:
             <select id="ahSort" onchange="ahSort(this.value)" style="border:1px solid var(--color-border);border-radius:6px;padding:3px 8px;font-size:13px;">
-                <option value="buchungen">Buchungen ↓</option>
-                <option value="umsatz">Reisepreis ↓</option>
-                <option value="me">Miete Eig. ↓</option>
-                <option value="name">Name A–Z</option>
+                <option value="buchungen">Buchungen \u2193</option>
+                <option value="umsatz">Reisepreis \u2193</option>
+                <option value="me">Miete Eig. \u2193</option>
+                <option value="name">Name A\u2013Z</option>
             </select></span>
         </div>
         <div class="ah-kpi-summary" id="ahKpiRow">
-            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiHaeuser">–</div><div class="ah-summary-lbl">Häuser</div></div>
-            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiBuchungen">–</div><div class="ah-summary-lbl">Buchungen</div></div>
-            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiUmsatz">–</div><div class="ah-summary-lbl">Reisepreis gesamt</div></div>
-            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiMe" style="color:#065f46;">–</div><div class="ah-summary-lbl">Miete Eigentümer gesamt</div></div>
+            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiHaeuser">\u2013</div><div class="ah-summary-lbl">H\u00e4user</div></div>
+            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiBuchungen">\u2013</div><div class="ah-summary-lbl">Buchungen</div></div>
+            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiUmsatz">\u2013</div><div class="ah-summary-lbl">Reisepreis gesamt</div></div>
+            <div class="ah-summary-kpi"><div class="ah-summary-val" id="ahKpiMe" style="color:#065f46;">\u2013</div><div class="ah-summary-lbl">Miete Eigent\u00fcmer gesamt</div></div>
         </div>
+
+        <!-- Gesamt\u00fcbersicht-Tabelle -->
         <div class="ah-overview-wrap">
-            <h4 style="font-size:13px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Gesamtübersicht alle Häuser</h4>
+            <h4 style="font-size:13px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Gesamt\u00fcbersicht alle H\u00e4user</h4>
             <table class="ah-overview-table" id="ahOverviewTable">
                 <thead><tr>
                     <th>Haus</th>
@@ -1299,6 +1284,8 @@ def generate_html(data):
                 <tfoot id="ahOverviewFoot"></tfoot>
             </table>
         </div>
+
+        <!-- Detailkarten -->
         <h4 style="font-size:13px;font-weight:600;color:var(--color-text-muted);margin:18px 0 10px;text-transform:uppercase;letter-spacing:.5px;">Detailansicht je Haus</h4>
         <div class="ah-grid" id="ahGrid">
             {ah_cards_html}
@@ -1312,6 +1299,7 @@ def generate_html(data):
         .ah-summary-kpi {{ background:var(--color-bg); border-radius:var(--radius-sm); padding:10px; text-align:center; }}
         .ah-summary-val {{ font-size:20px; font-weight:700; color:var(--color-primary); }}
         .ah-summary-lbl {{ font-size:11px; color:var(--color-text-muted); margin-top:2px; }}
+        /* Overview table */
         .ah-overview-wrap {{ background:#fff; border-radius:var(--radius-sm); padding:14px; box-shadow:var(--shadow-card); margin-bottom:18px; overflow-x:auto; }}
         .ah-overview-table {{ width:100%; border-collapse:collapse; font-size:13px; }}
         .ah-overview-table th {{ background:var(--color-bg); color:var(--color-text-muted); font-size:11px; text-transform:uppercase; letter-spacing:.4px; padding:6px 10px; text-align:left; }}
@@ -1321,6 +1309,7 @@ def generate_html(data):
         .ah-overview-table tfoot td {{ padding:8px 10px; border-top:2px solid var(--color-primary); font-weight:700; background:var(--color-bg); }}
         .ah-ov-me {{ color:#065f46; font-weight:600; }}
         .ah-ov-pct {{ color:#888; font-size:12px; }}
+        /* Cards */
         .ah-grid {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:14px; }}
         .ah-card {{ background:#fff; border-radius:var(--radius-sm); padding:14px; box-shadow:var(--shadow-card); }}
         .ah-header {{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:8px; }}
@@ -1352,11 +1341,11 @@ def generate_html(data):
         let currentYear = null;
 
         function fmtEur(v) {{
-            return v.toLocaleString('de-DE',{{minimumFractionDigits:0,maximumFractionDigits:0}}) + ' €';
+            return v.toLocaleString('de-DE',{{minimumFractionDigits:0,maximumFractionDigits:0}}) + '\u202f\u20ac';
         }}
         function pct(a, b) {{
-            if (!b) return '–';
-            return Math.round(a / b * 100) + ' %';
+            if (!b) return '\u2013';
+            return Math.round(a / b * 100) + '\u202f%';
         }}
 
         function updateCards(year) {{
@@ -1381,11 +1370,13 @@ def generate_html(data):
                 if (gb === 0) continue;
                 cards.push({{hausName, units, gb, gu, gme}});
             }}
+            // Sort
             if (sortVal === 'buchungen') cards.sort((a,b) => b.gb - a.gb);
             else if (sortVal === 'umsatz') cards.sort((a,b) => b.gu - a.gu);
             else if (sortVal === 'me') cards.sort((a,b) => b.gme - a.gme);
             else cards.sort((a,b) => a.hausName.localeCompare(b.hausName, 'de'));
 
+            // --- Gesamt\u00fcbersicht-Tabelle ---
             const tbody = document.getElementById('ahOverviewBody');
             const tfoot = document.getElementById('ahOverviewFoot');
             let totB=0, totU=0, totMe=0;
@@ -1401,20 +1392,21 @@ def generate_html(data):
                 </tr>`;
             }}).join('');
             tfoot.innerHTML = `<tr>
-                <td><strong>Gesamt (${{cards.length}} Häuser)</strong></td>
+                <td><strong>Gesamt (${{cards.length}} H\u00e4user)</strong></td>
                 <td class="ah-ov-num"><strong>${{totB.toLocaleString('de-DE')}}</strong></td>
                 <td class="ah-ov-num"><strong>${{fmtEur(totU)}}</strong></td>
                 <td class="ah-ov-num ah-ov-me"><strong>${{fmtEur(totMe)}}</strong></td>
                 <td class="ah-ov-num ah-ov-pct"><strong>${{pct(totMe, totU)}}</strong></td>
             </tr>`;
 
+            // --- Detailkarten ---
             grid.innerHTML = cards.map(c => {{
                 const maxB = Math.max(...Object.values(c.units).map(u => u.buchungen), 1);
                 const rowsSorted = Object.entries(c.units).sort((a,b) => b[1].buchungen - a[1].buchungen);
                 const rows = rowsSorted.map(([uname, v]) => {{
                     const barPct = Math.round(v.buchungen / maxB * 100);
-                    const uStr = v.umsatz > 0 ? fmtEur(v.umsatz) : '–';
-                    const meStr = v.miete_eigentuemer > 0 ? fmtEur(v.miete_eigentuemer) : '–';
+                    const uStr = v.umsatz > 0 ? fmtEur(v.umsatz) : '\u2013';
+                    const meStr = v.miete_eigentuemer > 0 ? fmtEur(v.miete_eigentuemer) : '\u2013';
                     return `<tr>
                         <td class="ah-obj-name" title="${{uname}}">${{uname}}</td>
                         <td class="ah-obj-bar"><div class="ah-bar-wrap"><div class="ah-bar" style="width:${{barPct}}%"></div><span class="ah-bar-label">${{v.buchungen}}</span></div></td>
@@ -1451,6 +1443,7 @@ def generate_html(data):
                 </div>`;
             }}).join('\\n');
 
+            // Update KPI-Leiste
             document.getElementById('ahKpiHaeuser').textContent = cards.length;
             document.getElementById('ahKpiBuchungen').textContent = totB.toLocaleString('de-DE');
             document.getElementById('ahKpiUmsatz').textContent = fmtEur(totU);
@@ -1464,14 +1457,16 @@ def generate_html(data):
         }};
         window.ahSort = function(val) {{ updateCards(currentYear); }};
 
+        // Initial render
         updateCards(null);
     }})();
     </script>'''
 
     TABS = [
-        ("uebersicht",        "Übersicht"),
+        ("uebersicht",        "\u00dcbersicht"),
         ("jahresvergleich",   "Jahresvergleich"),
-        ("vertriebskanaele",  "Vertriebskanäle"),
+        ("reiseprofile",      "Reiseprofile"),
+        ("vertriebskanaele",  "Vertriebskan\u00e4le"),
         ("orte",              "Orte"),
         ("zusatzkosten",      "Zusatzkosten"),
         ("provisionen",       "Provisionen"),
@@ -1493,7 +1488,7 @@ def generate_html(data):
         ),
         "jahresvergleich": (
             '''<div class="chart-container">
-            <h3>Übernachtungen pro Monat (Jahresvergleich)</h3>
+            <h3>\u00dcbernachtungen pro Monat (Jahresvergleich)</h3>
             <div class="chart-wrapper line-chart"><canvas id="monthlyChart"></canvas></div>
         </div>
         <div class="chart-container">
@@ -1501,7 +1496,35 @@ def generate_html(data):
             ''' + comparison_table + '''
         </div>'''
         ),
-                "vertriebskanaele": channel_year_html,
+        "reiseprofile": (
+            '''<div class="chart-container">
+            <h3>Reiseprofile \u2013 Jahresvergleich</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:12px;">Abgeleitet aus gebuchten Zusatzleistungen: Kinderreisebett/Hochstuhl\u00a0= Familie, Hund-Zuschlag\u00a0= Hundeurlaub, Aufschlag Mitreisende\u00a0= Gruppe, Sauna/Whirlpool\u00a0= Wellness, Wallbox\u00a0= E-Auto.</p>
+            <div class="chart-wrapper bar-chart"><canvas id="profileYearChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+            <h3>Top 15 Unterk\u00fcnfte \u2013 Hundeurlaub-Anteil</h3>
+            <div class="chart-wrapper hbar-chart"><canvas id="hundChart"></canvas></div>
+        </div>
+        <div class="chart-container">
+            <h3>Alle Unterk\u00fcnfte \u2013 Zielgruppen-Verteilung</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:12px;">Sortiert nach h\u00f6chstem Hundeurlaub-Anteil.</p>
+            <div style="overflow-x:auto;">
+            <table class="prov-table">
+                <thead>
+                    <tr>
+                        <th>Unterkunft</th><th class="num">Buchungen</th>
+                        <th class="num">Hund</th><th class="num">Familie</th>
+                        <th class="num">Gruppe</th><th class="num">Wellness</th>
+                        <th class="num">Paare/Einzel</th><th>Verteilung</th>
+                    </tr>
+                </thead>
+                <tbody>''' + profile_table_rows + '''</tbody>
+            </table>
+            </div>
+        </div>'''
+        ),
+        "vertriebskanaele": channel_year_html,
         "orte": (
             '''<div class="chart-container">
             <h3>Buchungen nach Ort</h3>
@@ -1510,31 +1533,31 @@ def generate_html(data):
         ),
         "zusatzkosten": (
             '''<div class="chart-container">
-            <h3>Top 10 Zusatzkosten – Vermittler vs. Eigentümer</h3>
+            <h3>Top 10 Zusatzkosten \u2013 Vermittler vs. Eigent\u00fcmer</h3>
             <div class="chart-wrapper hbar-chart"><canvas id="zusatzChart"></canvas></div>
         </div>
         <div class="chart-container">
-            <h3>Top 5 Zusatzkosten – Jahresvergleich</h3>
+            <h3>Top 5 Zusatzkosten \u2013 Jahresvergleich</h3>
             <div class="chart-wrapper bar-chart"><canvas id="zusatzYearChart"></canvas></div>
         </div>
         <div class="chart-container">
-            <h3>Alle Zusatzkosten – Detailtabelle</h3>
+            <h3>Alle Zusatzkosten \u2013 Detailtabelle</h3>
             ''' + zusatz_detail_table + '''
         </div>'''
         ),
         "provisionen": (
             '''<div class="chart-container">
-            <h3>Provisionseinnahmen Ostseeliebe – nach Unterkunft</h3>
-            <p style="color:#666;font-size:13px;margin-bottom:16px;">Miete Vermittler + Zusatzkosten Vermittler = Provision gesamt. Sortiert nach höchster Provision.</p>
+            <h3>Provisionseinnahmen Ostseeliebe \u2013 nach Unterkunft</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:16px;">Miete Vermittler + Zusatzkosten Vermittler = Provision gesamt. Sortiert nach h\u00f6chster Provision.</p>
         </div>
         ''' + prov_tab_html
         ),
         "apartmenthaeuser": apartmenthaus_tab_html,
         "unterkunft_detail": (
             '''<div class="chart-container">
-            <h3>Unterkunft auswählen</h3>
+            <h3>Unterkunft ausw\u00e4hlen</h3>
             <select id="propSelect" class="prop-select">
-                <option value="">-- Bitte Unterkunft wählen --</option>
+                <option value="">-- Bitte Unterkunft w\u00e4hlen --</option>
                 ''' + property_options + '''
             </select>
         </div>
@@ -1990,13 +2013,77 @@ def generate_html(data):
                 scales: {{
                     y: {{
                         beginAtZero: true,
-                        title: {{ display: true, text: 'Nächte' }}
+                        title: {{ display: true, text: 'N\u00e4chte' }}
                     }}
                 }}
             }}
         }});
 
-   
+        // Reiseprofile Year Chart (stacked bar)
+        new Chart(document.getElementById('profileYearChart'), {{
+            type: 'bar',
+            data: {{
+                labels: {json_years},
+                datasets: {json_profile_datasets}
+            }},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {{
+                    legend: {{ position: 'top' }}
+                }},
+                scales: {{
+                    x: {{ stacked: true }},
+                    y: {{
+                        stacked: true,
+                        beginAtZero: true,
+                        title: {{ display: true, text: 'Anzahl Buchungen' }}
+                    }}
+                }}
+            }}
+        }});
+
+        // Top 15 Hund Properties Chart
+        new Chart(document.getElementById('hundChart'), {{
+            type: 'bar',
+            data: {{
+                labels: {json_hund_labels},
+                datasets: [{{
+                    label: 'Hundeurlaub-Anteil (%)',
+                    data: {json_hund_pcts},
+                    backgroundColor: '#ff6b6b',
+                    borderRadius: 4
+                }}]
+            }},
+            options: {{
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {{
+                    legend: {{ display: false }},
+                    tooltip: {{
+                        callbacks: {{
+                            label: function(ctx) {{
+                                var counts = {json_hund_counts};
+                                return ctx.raw + '% (' + counts[ctx.dataIndex] + ' Buchungen)';
+                            }}
+                        }}
+                    }}
+                }},
+                scales: {{
+                    x: {{
+                        beginAtZero: true,
+                        max: 100,
+                        title: {{ display: true, text: 'Anteil Hundeurlaub (%)' }},
+                        ticks: {{ callback: function(v) {{ return v + '%'; }} }}
+                    }}
+                }}
+            }}
+        }});
+
+        // Sales Channels Doughnut Charts (per year)
+        {channel_chart_js}
+
         // Locations Bar Chart
         new Chart(document.getElementById('ortChart'), {{
             type: 'bar',
@@ -2037,7 +2124,7 @@ def generate_html(data):
                         borderRadius: 4
                     }},
                     {{
-                        label: 'Eigentümer',
+                        label: 'Eigent\u00fcmer',
                         data: {zusatz_chart_eigentuemer},
                         backgroundColor: '#00aaaa',
                         borderRadius: 4
@@ -2117,7 +2204,7 @@ def generate_html(data):
         function renderProperty(name) {{
             var container = document.getElementById('propDetailContent');
             if (!name || !propData[name]) {{
-                container.innerHTML = '<p style="color:#888;padding:20px;">Bitte eine Unterkunft auswählen.</p>';
+                container.innerHTML = '<p style="color:#888;padding:20px;">Bitte eine Unterkunft ausw\u00e4hlen.</p>';
                 return;
             }}
             var p = propData[name];
@@ -2133,14 +2220,14 @@ def generate_html(data):
                 // KPI Grid
                 html += '<div class="prop-detail-grid">';
                 html += '<div class="prop-kpi"><div class="pk-label">Buchungen</div><div class="pk-value">' + yd.buchungen + '</div></div>';
-                html += '<div class="prop-kpi"><div class="pk-label">Nächte</div><div class="pk-value">' + fmtNum(yd.naechte) + '</div></div>';
+                html += '<div class="prop-kpi"><div class="pk-label">N\u00e4chte</div><div class="pk-value">' + fmtNum(yd.naechte) + '</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Reisepreis</div><div class="pk-value">' + fmtEuro(yd.reisepreis) + '</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Miete gesamt</div><div class="pk-value">' + fmtEuro(yd.miete_gesamt) + '</div></div>';
-                html += '<div class="prop-kpi"><div class="pk-label">Miete Eigentümer</div><div class="pk-value green">' + fmtEuro(yd.miete_eigentuemer) + '</div></div>';
+                html += '<div class="prop-kpi"><div class="pk-label">Miete Eigent\u00fcmer</div><div class="pk-value green">' + fmtEuro(yd.miete_eigentuemer) + '</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Provision (Verm.)</div><div class="pk-value" style="color:#e65100;">' + fmtEuro(yd.miete_vermittler) + '</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Prov.satz</div><div class="pk-value" style="color:#e65100;">' + fmtNum(yd.provision_pct, 1) + ' %</div></div>';
-                html += '<div class="prop-kpi"><div class="pk-label">Ø Preis/Nacht</div><div class="pk-value">' + fmtEuro(yd.avg_preis_nacht) + '</div></div>';
-                html += '<div class="prop-kpi"><div class="pk-label">Ø Aufenthalt</div><div class="pk-value">' + fmtNum(yd.avg_aufenthalt, 1) + ' N.</div></div>';
+                html += '<div class="prop-kpi"><div class="pk-label">\u00d8 Preis/Nacht</div><div class="pk-value">' + fmtEuro(yd.avg_preis_nacht) + '</div></div>';
+                html += '<div class="prop-kpi"><div class="pk-label">\u00d8 Aufenthalt</div><div class="pk-value">' + fmtNum(yd.avg_aufenthalt, 1) + ' N.</div></div>';
                 html += '<div class="prop-kpi"><div class="pk-label">Auslastung</div><div class="pk-value">' + fmtNum(yd.belegung_pct, 1) + ' %</div></div>';
                 html += '</div>';
 
@@ -2148,7 +2235,7 @@ def generate_html(data):
                 if (yd.channels && yd.channels.length > 0) {{
                     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">';
                     html += '<div>';
-                    html += '<h4 style="font-size:14px;margin-bottom:8px;">Vertriebskanäle</h4>';
+                    html += '<h4 style="font-size:14px;margin-bottom:8px;">Vertriebskan\u00e4le</h4>';
                     html += '<table class="prop-channel-table"><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody>';
                     yd.channels.forEach(function(ch) {{
                         html += '<tr><td>' + (ch[0] || '(leer)') + '</td><td class="num">' + ch[1] + '</td></tr>';
@@ -2159,7 +2246,7 @@ def generate_html(data):
                     html += '<div>';
                     html += '<h4 style="font-size:14px;margin-bottom:8px;">Zusatzkosten</h4>';
                     if (yd.zusatzkosten && yd.zusatzkosten.length > 0) {{
-                        html += '<table class="prop-zk-table"><thead><tr><th>Kategorie</th><th class="num">Gesamt</th><th class="num sub">Vermittler</th><th class="num sub">Eigentümer</th></tr></thead><tbody>';
+                        html += '<table class="prop-zk-table"><thead><tr><th>Kategorie</th><th class="num">Gesamt</th><th class="num sub">Vermittler</th><th class="num sub">Eigent\u00fcmer</th></tr></thead><tbody>';
                         var zkTotal = 0, zkV = 0, zkE = 0;
                         yd.zusatzkosten.forEach(function(z) {{
                             html += '<tr><td>' + z.name + '</td><td class="num">' + fmtEuro(z.gesamt) + '</td><td class="num sub">' + fmtEuro(z.vermittler) + '</td><td class="num sub">' + fmtEuro(z.eigentuemer) + '</td></tr>';
@@ -2177,7 +2264,7 @@ def generate_html(data):
             }});
 
             // Jahresvergleich mini chart
-            html += '<div class="prop-section"><h4>Jahresvergleich – Reisepreis</h4><canvas id="propYearChart" style="max-height:300px;"></canvas></div>';
+            html += '<div class="prop-section"><h4>Jahresvergleich \u2013 Reisepreis</h4><canvas id="propYearChart" style="max-height:300px;"></canvas></div>';
             container.innerHTML = html;
 
             // Render mini chart
@@ -2199,7 +2286,7 @@ def generate_html(data):
                         labels: labels,
                         datasets: [
                             {{ label: 'Reisepreis', data: rpData, backgroundColor: '#0066cc', borderRadius: 4 }},
-                            {{ label: 'Miete Eigentümer', data: meData, backgroundColor: '#00aaaa', borderRadius: 4 }}
+                            {{ label: 'Miete Eigent\u00fcmer', data: meData, backgroundColor: '#00aaaa', borderRadius: 4 }}
                         ]
                     }},
                     options: {{
@@ -2274,19 +2361,19 @@ def generate_property_html(prop_name, pdata, years):
             <h2>{y}</h2>
             <div class="kpi-grid">
                 <div class="kpi"><div class="kl">Buchungen</div><div class="kv">{yd["buchungen"]}</div></div>
-                <div class="kpi"><div class="kl">Nächte</div><div class="kv">{format_german_number(yd["naechte"], 0)}</div></div>
+                <div class="kpi"><div class="kl">N\u00e4chte</div><div class="kv">{format_german_number(yd["naechte"], 0)}</div></div>
                 <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">{format_euro(yd["reisepreis"])}</div></div>
                 <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">{format_euro(yd["miete_gesamt"])}</div></div>
-                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">{format_euro(yd["miete_eigentuemer"])}</div></div>
+                <div class="kpi"><div class="kl">Miete Eigent\u00fcmer</div><div class="kv green">{format_euro(yd["miete_eigentuemer"])}</div></div>
                 <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">{format_euro(yd.get("miete_vermittler", 0))}</div></div>
                 <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">{format_german_number(yd.get("provision_pct", 0), 1)} %</div></div>
-                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">{format_euro(yd["avg_preis_nacht"])}</div></div>
-                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">{format_german_number(yd["avg_aufenthalt"], 1)} N.</div></div>
+                <div class="kpi"><div class="kl">\u00d8 Preis/Nacht</div><div class="kv">{format_euro(yd["avg_preis_nacht"])}</div></div>
+                <div class="kpi"><div class="kl">\u00d8 Aufenthalt</div><div class="kv">{format_german_number(yd["avg_aufenthalt"], 1)} N.</div></div>
                 <div class="kpi"><div class="kl">Auslastung</div><div class="kv">{format_german_number(yd["belegung_pct"], 1)} %</div></div>
             </div>
             <div class="two-col">
                 <div>
-                    <h3>Vertriebskanäle</h3>
+                    <h3>Vertriebskan\u00e4le</h3>
                     <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody>{ch_rows}</tbody></table>
                 </div>
                 <div>
@@ -2305,7 +2392,7 @@ def generate_property_html(prop_name, pdata, years):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{prop_name} – Umsatzübersicht</title>
+    <title>{prop_name} \u2013 Umsatz\u00fcbersicht</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         * {{ margin:0; padding:0; box-sizing:border-box; }}
@@ -2336,11 +2423,11 @@ def generate_property_html(prop_name, pdata, years):
 <body>
     <div class="header">
         <h1>{prop_name}</h1>
-        <div class="sub">{pdata["ort"]} \u2014 Umsatzübersicht \u2014 Stand {update_date}</div>
+        <div class="sub">{pdata["ort"]} \u2014 Umsatz\u00fcbersicht \u2014 Stand {update_date}</div>
     </div>
     <div class="container">
         <div class="chart-section">
-            <h3>Jahresvergleich – Reisepreis & Miete Eigentümer</h3>
+            <h3>Jahresvergleich \u2013 Reisepreis & Miete Eigent\u00fcmer</h3>
             <canvas id="yearChart" style="max-height:300px;"></canvas>
         </div>
         {year_sections}
@@ -2352,7 +2439,7 @@ def generate_property_html(prop_name, pdata, years):
                 labels: {json_labels},
                 datasets: [
                     {{ label: 'Reisepreis', data: {json_rp}, backgroundColor: '#0066cc', borderRadius: 4 }},
-                    {{ label: 'Miete Eigentümer', data: {json_me}, backgroundColor: '#00aaaa', borderRadius: 4 }}
+                    {{ label: 'Miete Eigent\u00fcmer', data: {json_me}, backgroundColor: '#00aaaa', borderRadius: 4 }}
                 ]
             }},
             options: {{
