@@ -210,9 +210,38 @@ def fetch_salesbooking_csv(session, year):
                 if len(cl) > 5 and sum(1 for l in cl[:3] if ";" in l) >= 2:
                     print(f"✅  {label}: CSV via Link ({len(cr.content):,} Bytes)")
                     return cr.text
-                # Diagnose: was kam zurück?
-                print(f"   Export-Link Content-Type: {cr_ct}")
-                print(f"   Export-Link Zeilen: {len(cl)}, erste 300 Zeichen: {cr.text[:300]!r}")
+                # HTML-Antwort: Export-Seite nach dem echten Download-Link durchsuchen
+                if "text/html" in cr_ct:
+                    print(f"   Export-Seite ist HTML ({len(cl)} Zeilen) – suche Download-Link …")
+                    for pattern2 in [
+                        r'href="([^"]*\.csv[^"]*)"',
+                        r'href="([^"]*fewoOffice_export[^"]*)"',
+                        r'href="([^"]*[Dd]ownload[^"]*)"',
+                        r'action="([^"]*fewoOffice_export[^"]*)"',
+                    ]:
+                        m2 = re.search(pattern2, cr.text)
+                        if m2:
+                            link2 = m2.group(1)
+                            link2 = link2.replace("&amp;", "&").replace("&lt;", "<")
+                            if not link2.startswith("http"):
+                                link2 = BASE_URL + "/" + link2.lstrip("/")
+                            if link2 == link:
+                                continue
+                            print(f"📎  {label}: 2. Export-Link → {link2[:80]}")
+                            cr2 = session.get(link2, timeout=60)
+                            cr2.raise_for_status()
+                            cr2_ct = cr2.headers.get("content-type", "")
+                            if "text/csv" in cr2_ct or "application/csv" in cr2_ct:
+                                print(f"✅  {label}: CSV via 2-stufigem Link ({len(cr2.content):,} Bytes)")
+                                return cr2.text
+                            cl2 = cr2.text.strip().split("\n")
+                            if len(cl2) > 5 and sum(1 for l in cl2[:3] if ";" in l) >= 2:
+                                print(f"✅  {label}: CSV via 2-stufigem Link ({len(cr2.content):,} Bytes)")
+                                return cr2.text
+                            print(f"   2. Link: {cr2_ct}, {len(cl2)} Zeilen, {cr2.text[:200]!r}")
+                            break
+                    all_hrefs = re.findall(r'href="([^"]{5,80})"', cr.text)
+                    print(f"   Alle hrefs auf Export-Seite: {all_hrefs[:15]}")
         return None
 
     try:
