@@ -756,6 +756,25 @@ def generate_html(data):
             </div>
         </div>''')
     kpi_html = "\n".join(kpi_html_parts)
+    # --- Archive section for kpi (2024..current-1) ---
+    kpi_archive_parts = []
+    for y in sorted(years_archive, reverse=True):
+        k = kpis[y]
+        zt = zusatz_year_totals.get(y, {"vermittler": 0, "eigentuemer": 0, "gesamt": 0})
+        kpi_archive_parts.append(f'''<div class="year-section" style="opacity:0.75;">
+        <h3 style="color:#888;border-bottom:1px solid #ddd;padding-bottom:8px;">{y}</h3>
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-label">Buchungen</div><div class="kpi-value">{k["buchungen"]}</div></div>
+            <div class="kpi-card"><div class="kpi-label">N\u00e4chte</div><div class="kpi-value">{k["naechte"]:,.0f}</div></div>
+            <div class="kpi-card"><div class="kpi-label">Reisepreis</div><div class="kpi-value">{k["reisepreis"]:,.2f}\u00a0\u20ac</div></div>
+            <div class="kpi-card"><div class="kpi-label">Miete gesamt</div><div class="kpi-value">{k["miete_gesamt"]:,.2f}\u00a0\u20ac</div></div>
+            <div class="kpi-card"><div class="kpi-label">Miete Eigent\u00fcmer</div><div class="kpi-value">{k["miete_eigentuemer"]:,.2f}\u00a0\u20ac</div></div>
+        </div></div>''')
+    kpi_archive_html = ""
+    if kpi_archive_parts:
+        yr_range = f"{min(years_archive)}\u2013{max(years_archive)}"
+        kpi_archive_html = f'''<details style="margin-top:24px;"><summary style="cursor:pointer;font-size:16px;font-weight:600;color:#888;padding:8px 0;">&#9654; Archiv {yr_range}</summary>{"".join(kpi_archive_parts)}</details>'''
+    kpi_html = kpi_html + kpi_archive_html
 
     # --- Build comparison table HTML ---
     table_header = "<tr><th>Monat</th>" + "".join(f"<th>{y}</th>" for y in years) + "</tr>"
@@ -1452,7 +1471,6 @@ def generate_html(data):
     TABS = [
         ("uebersicht",        "Übersicht"),
         ("jahresvergleich",   "Jahresvergleich"),
-        ("reiseprofile",      "Reiseprofile"),
         ("vertriebskanaele",  "Vertriebskanäle"),
         ("orte",              "Orte"),
         ("zusatzkosten",      "Zusatzkosten"),
@@ -1483,35 +1501,7 @@ def generate_html(data):
             ''' + comparison_table + '''
         </div>'''
         ),
-        "reiseprofile": (
-            '''<div class="chart-container">
-            <h3>Reiseprofile – Jahresvergleich</h3>
-            <p style="color:#666;font-size:13px;margin-bottom:12px;">Abgeleitet aus gebuchten Zusatzleistungen: Kinderreisebett/Hochstuhl\u00a0= Familie, Hund-Zuschlag\u00a0= Hundeurlaub, Aufschlag Mitreisende\u00a0= Gruppe, Sauna/Whirlpool\u00a0= Wellness, Wallbox\u00a0= E-Auto.</p>
-            <div class="chart-wrapper bar-chart"><canvas id="profileYearChart"></canvas></div>
-        </div>
-        <div class="chart-container">
-            <h3>Top 15 Unterkünfte – Hundeurlaub-Anteil</h3>
-            <div class="chart-wrapper hbar-chart"><canvas id="hundChart"></canvas></div>
-        </div>
-        <div class="chart-container">
-            <h3>Alle Unterkünfte – Zielgruppen-Verteilung</h3>
-            <p style="color:#666;font-size:13px;margin-bottom:12px;">Sortiert nach höchstem Hundeurlaub-Anteil.</p>
-            <div style="overflow-x:auto;">
-            <table class="prov-table">
-                <thead>
-                    <tr>
-                        <th>Unterkunft</th><th class="num">Buchungen</th>
-                        <th class="num">Hund</th><th class="num">Familie</th>
-                        <th class="num">Gruppe</th><th class="num">Wellness</th>
-                        <th class="num">Paare/Einzel</th><th>Verteilung</th>
-                    </tr>
-                </thead>
-                <tbody>''' + profile_table_rows + '''</tbody>
-            </table>
-            </div>
-        </div>'''
-        ),
-        "vertriebskanaele": channel_year_html,
+                "vertriebskanaele": channel_year_html,
         "orte": (
             '''<div class="chart-container">
             <h3>Buchungen nach Ort</h3>
@@ -2006,71 +1996,7 @@ def generate_html(data):
             }}
         }});
 
-        // Reiseprofile Year Chart (stacked bar)
-        new Chart(document.getElementById('profileYearChart'), {{
-            type: 'bar',
-            data: {{
-                labels: {json_years},
-                datasets: {json_profile_datasets}
-            }},
-            options: {{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {{
-                    legend: {{ position: 'top' }}
-                }},
-                scales: {{
-                    x: {{ stacked: true }},
-                    y: {{
-                        stacked: true,
-                        beginAtZero: true,
-                        title: {{ display: true, text: 'Anzahl Buchungen' }}
-                    }}
-                }}
-            }}
-        }});
-
-        // Top 15 Hund Properties Chart
-        new Chart(document.getElementById('hundChart'), {{
-            type: 'bar',
-            data: {{
-                labels: {json_hund_labels},
-                datasets: [{{
-                    label: 'Hundeurlaub-Anteil (%)',
-                    data: {json_hund_pcts},
-                    backgroundColor: '#ff6b6b',
-                    borderRadius: 4
-                }}]
-            }},
-            options: {{
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {{
-                    legend: {{ display: false }},
-                    tooltip: {{
-                        callbacks: {{
-                            label: function(ctx) {{
-                                var counts = {json_hund_counts};
-                                return ctx.raw + '% (' + counts[ctx.dataIndex] + ' Buchungen)';
-                            }}
-                        }}
-                    }}
-                }},
-                scales: {{
-                    x: {{
-                        beginAtZero: true,
-                        max: 100,
-                        title: {{ display: true, text: 'Anteil Hundeurlaub (%)' }},
-                        ticks: {{ callback: function(v) {{ return v + '%'; }} }}
-                    }}
-                }}
-            }}
-        }});
-
-        // Sales Channels Doughnut Charts (per year)
-        {channel_chart_js}
-
+   
         // Locations Bar Chart
         new Chart(document.getElementById('ortChart'), {{
             type: 'bar',
