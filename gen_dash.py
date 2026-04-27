@@ -1467,7 +1467,6 @@ def generate_html(data):
     TABS = [
         ("uebersicht",        "\u00dcbersicht"),
         ("jahresvergleich",   "Jahresvergleich"),
-        ("reiseprofile",      "Reiseprofile"),
         ("vertriebskanaele",  "Vertriebskan\u00e4le"),
         ("orte",              "Orte"),
         ("zusatzkosten",      "Zusatzkosten"),
@@ -1498,34 +1497,6 @@ def generate_html(data):
             ''' + comparison_table + '''
         </div>'''
         ),
-        "reiseprofile": (
-            '''<div class="chart-container">
-            <h3>Reiseprofile \u2013 Jahresvergleich</h3>
-            <p style="color:#666;font-size:13px;margin-bottom:12px;">Abgeleitet aus gebuchten Zusatzleistungen: Kinderreisebett/Hochstuhl\u00a0= Familie, Hund-Zuschlag\u00a0= Hundeurlaub, Aufschlag Mitreisende\u00a0= Gruppe, Sauna/Whirlpool\u00a0= Wellness, Wallbox\u00a0= E-Auto.</p>
-            <div class="chart-wrapper bar-chart"><canvas id="profileYearChart"></canvas></div>
-        </div>
-        <div class="chart-container">
-            <h3>Top 15 Unterk\u00fcnfte \u2013 Hundeurlaub-Anteil</h3>
-            <div class="chart-wrapper hbar-chart"><canvas id="hundChart"></canvas></div>
-        </div>
-        <div class="chart-container">
-            <h3>Alle Unterk\u00fcnfte \u2013 Zielgruppen-Verteilung</h3>
-            <p style="color:#666;font-size:13px;margin-bottom:12px;">Sortiert nach h\u00f6chstem Hundeurlaub-Anteil.</p>
-            <div style="overflow-x:auto;">
-            <table class="prov-table">
-                <thead>
-                    <tr>
-                        <th>Unterkunft</th><th class="num">Buchungen</th>
-                        <th class="num">Hund</th><th class="num">Familie</th>
-                        <th class="num">Gruppe</th><th class="num">Wellness</th>
-                        <th class="num">Paare/Einzel</th><th>Verteilung</th>
-                    </tr>
-                </thead>
-                <tbody>''' + profile_table_rows + '''</tbody>
-            </table>
-            </div>
-        </div>'''
-        ),
         "vertriebskanaele": channel_year_html,
         "orte": (
             '''<div class="chart-container">
@@ -1535,14 +1506,6 @@ def generate_html(data):
         ),
         "zusatzkosten": (
             '''<div class="chart-container">
-            <h3>Top 10 Zusatzkosten \u2013 Vermittler vs. Eigent\u00fcmer</h3>
-            <div class="chart-wrapper hbar-chart"><canvas id="zusatzChart"></canvas></div>
-        </div>
-        <div class="chart-container">
-            <h3>Top 5 Zusatzkosten \u2013 Jahresvergleich</h3>
-            <div class="chart-wrapper bar-chart"><canvas id="zusatzYearChart"></canvas></div>
-        </div>
-        <div class="chart-container">
             <h3>Alle Zusatzkosten \u2013 Detailtabelle</h3>
             ''' + zusatz_detail_table + '''
         </div>'''
@@ -2021,68 +1984,6 @@ def generate_html(data):
             }}
         }});
 
-        // Reiseprofile Year Chart (stacked bar)
-        new Chart(document.getElementById('profileYearChart'), {{
-            type: 'bar',
-            data: {{
-                labels: {json_years},
-                datasets: {json_profile_datasets}
-            }},
-            options: {{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {{
-                    legend: {{ position: 'top' }}
-                }},
-                scales: {{
-                    x: {{ stacked: true }},
-                    y: {{
-                        stacked: true,
-                        beginAtZero: true,
-                        title: {{ display: true, text: 'Anzahl Buchungen' }}
-                    }}
-                }}
-            }}
-        }});
-
-        // Top 15 Hund Properties Chart
-        new Chart(document.getElementById('hundChart'), {{
-            type: 'bar',
-            data: {{
-                labels: {json_hund_labels},
-                datasets: [{{
-                    label: 'Hundeurlaub-Anteil (%)',
-                    data: {json_hund_pcts},
-                    backgroundColor: '#ff6b6b',
-                    borderRadius: 4
-                }}]
-            }},
-            options: {{
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {{
-                    legend: {{ display: false }},
-                    tooltip: {{
-                        callbacks: {{
-                            label: function(ctx) {{
-                                var counts = {json_hund_counts};
-                                return ctx.raw + '% (' + counts[ctx.dataIndex] + ' Buchungen)';
-                            }}
-                        }}
-                    }}
-                }},
-                scales: {{
-                    x: {{
-                        beginAtZero: true,
-                        max: 100,
-                        title: {{ display: true, text: 'Anteil Hundeurlaub (%)' }},
-                        ticks: {{ callback: function(v) {{ return v + '%'; }} }}
-                    }}
-                }}
-            }}
-        }});
-
         // Sales Channels Doughnut Charts (per year)
         {channel_chart_js}
 
@@ -2113,84 +2014,6 @@ def generate_html(data):
             }}
         }});
 
-        // Zusatzkosten Stacked Horizontal Bar (Vermittler vs Eigentuemer)
-        new Chart(document.getElementById('zusatzChart'), {{
-            type: 'bar',
-            data: {{
-                labels: {zusatz_chart_labels},
-                datasets: [
-                    {{
-                        label: 'Vermittler',
-                        data: {zusatz_chart_vermittler},
-                        backgroundColor: '#0066cc',
-                        borderRadius: 4
-                    }},
-                    {{
-                        label: 'Eigent\u00fcmer',
-                        data: {zusatz_chart_eigentuemer},
-                        backgroundColor: '#00aaaa',
-                        borderRadius: 4
-                    }}
-                ]
-            }},
-            options: {{
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {{
-                    legend: {{ position: 'top' }},
-                    tooltip: {{
-                        callbacks: {{
-                            label: function(ctx) {{
-                                return ctx.dataset.label + ': ' + new Intl.NumberFormat('de-DE', {{style:'currency',currency:'EUR'}}).format(ctx.raw);
-                            }}
-                        }}
-                    }}
-                }},
-                scales: {{
-                    x: {{
-                        stacked: true,
-                        ticks: {{
-                            callback: function(v) {{ return new Intl.NumberFormat('de-DE', {{style:'currency',currency:'EUR',maximumFractionDigits:0}}).format(v); }}
-                        }}
-                    }},
-                    y: {{
-                        stacked: true
-                    }}
-                }}
-            }}
-        }});
-
-        // Zusatzkosten Yearly Comparison (grouped bar)
-        new Chart(document.getElementById('zusatzYearChart'), {{
-            type: 'bar',
-            data: {{
-                labels: {zusatz_yearly_labels},
-                datasets: {json_zusatz_yearly_datasets}
-            }},
-            options: {{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {{
-                    legend: {{ position: 'top' }},
-                    tooltip: {{
-                        callbacks: {{
-                            label: function(ctx) {{
-                                return ctx.dataset.label + ': ' + new Intl.NumberFormat('de-DE', {{style:'currency',currency:'EUR'}}).format(ctx.raw);
-                            }}
-                        }}
-                    }}
-                }},
-                scales: {{
-                    y: {{
-                        beginAtZero: true,
-                        ticks: {{
-                            callback: function(v) {{ return new Intl.NumberFormat('de-DE', {{style:'currency',currency:'EUR',maximumFractionDigits:0}}).format(v); }}
-                        }}
-                    }}
-                }}
-            }}
-        }});
         // --- Unterkunft Detail ---
         var propData = {json_property_data};
         var allYears = {json_years};
