@@ -34,7 +34,7 @@
 <body>
     <div class="header">
         <h1>Ostseeschwimmer</h1>
-        <div class="sub">Wieck a. Darß — Umsatzübersicht — Stand 26.04.2026 14:19</div>
+        <div class="sub">Wieck a. Darß — Umsatzübersicht — Stand 27.04.2026 04:24</div>
     </div>
     <div class="container">
         <div class="chart-section">
@@ -242,15 +242,40 @@
                 </div>
             </div>
         </div>
+        <div class="section">
+            <h2>2026</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">1</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">14</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">1.374,00 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">997,50 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">795,72 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">201,78 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">20,2 %</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">98,14 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">14,0 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">3,8 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>Webseite</td><td class="num">1</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <table><thead><tr><th>Kategorie</th><th class='num'>Gesamt</th><th class='num sub'>Vermittler</th><th class='num sub'>Eigent.</th></tr></thead><tbody><tr><td>01. Endreinigung</td><td class="num">150,00 €</td><td class="num sub">150,00 €</td><td class="num sub">0,00 €</td></tr><tr><td>Stornogebühren</td><td class="num">85,50 €</td><td class="num sub">0,00 €</td><td class="num sub">85,50 €</td></tr><tr><td>06. Nebenkosten (obligatorisch)</td><td class="num">71,48 €</td><td class="num sub">81,00 €</td><td class="num sub">-9,52 €</td></tr><tr><td>02. Zusatzleistungen (buchbar)</td><td class="num">60,00 €</td><td class="num sub">60,00 €</td><td class="num sub">0,00 €</td></tr><tr style="background:#f5f7fa;border-top:2px solid #0066cc;"><td><strong>Summe</strong></td><td class="num"><strong>366,98 €</strong></td><td class="num sub"><strong>291,00 €</strong></td><td class="num sub"><strong>75,98 €</strong></td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         new Chart(document.getElementById('yearChart'), {
             type: 'bar',
             data: {
-                labels: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
+                labels: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
                 datasets: [
-                    { label: 'Reisepreis', data: [9504.0, 11044.2, 17865.07, 18279.46, 21725.69, 13335.3, 22086.91, 23749.68], backgroundColor: '#0066cc', borderRadius: 4 },
-                    { label: 'Miete Eigentümer', data: [438.73, 6499.25, 10349.9, 10560.34, 12415.12, 7279.82, 11330.68, 12253.99], backgroundColor: '#00aaaa', borderRadius: 4 }
+                    { label: 'Reisepreis', data: [9504.0, 11044.2, 17865.07, 18279.46, 21725.69, 13335.3, 22086.91, 23749.68, 1374.0], backgroundColor: '#0066cc', borderRadius: 4 },
+                    { label: 'Miete Eigentümer', data: [438.73, 6499.25, 10349.9, 10560.34, 12415.12, 7279.82, 11330.68, 12253.99, 795.72], backgroundColor: '#00aaaa', borderRadius: 4 }
                 ]
             },
             options: {
