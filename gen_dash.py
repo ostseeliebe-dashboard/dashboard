@@ -253,8 +253,17 @@ def read_bookings(csv_path):
 
 def compute_data(bookings):
     """Compute all aggregated data for the dashboard."""
+    import datetime as _dt
+    _now = _dt.datetime.now()
+    _current_year = _now.year
+    _next_year = _now.year + 1
+
     # --- Per-year KPIs ---
-    years = sorted(set(b["anreise"].year for b in bookings))
+    # Always include current year and next year, even if no bookings yet
+    _booking_years = set(b["anreise"].year for b in bookings)
+    _booking_years.add(_current_year)
+    _booking_years.add(_next_year)
+    years = sorted(_booking_years)
     kpis = {}
     for y in years:
         yb = [b for b in bookings if b["anreise"].year == y]
@@ -538,10 +547,15 @@ def compute_data(bookings):
 
 def generate_html(data):
     """Generate the complete dashboard HTML."""
+    import datetime as _dt
+    _current_year = _dt.datetime.now().year
+    _next_year = _current_year + 1
     _all_years = data["years"]
-    MAIN_FROM = 2024
-    years = [y for y in _all_years if y >= MAIN_FROM]
-    years_archive = [y for y in _all_years if y < MAIN_FROM]
+    # Main view: only current year + next year (per user request to limit tokens)
+    # Archive: 2024 up to (but not including) current year
+    ARCHIVE_FROM = 2024
+    years = sorted([y for y in _all_years if y in (_current_year, _next_year)])
+    years_archive = sorted([y for y in _all_years if ARCHIVE_FROM <= y < _current_year])
     kpis = data["kpis"]
     monthly_data = data["monthly_data"]
     monthly_count_data = data["monthly_count_data"]
