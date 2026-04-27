@@ -115,7 +115,7 @@ def fetch_buchungen_csv(session: requests.Session, date_from: str, date_to: str)
         ("FORM_ACTION",    "doExport"),
         ("REQUEST_TOKEN",  token),
         ("period",         period),
-        ("selectorfield",  "arrival"),   # nach Anreisedatum filtern
+        ("selectorfield",  "departure"), # nach Abreisedatum filtern (inkl. Zukunftsbuchungen)
         ("object",         ""),
         ("house",          ""),
         ("agent",          ""),
