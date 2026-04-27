@@ -197,7 +197,9 @@ def read_bookings(csv_path):
             if len(row) < 17:
                 continue
             status = row[9].strip()
-            if status != "Buchung":
+            # "Buchung" = abgerechnet (Journal); weitere Status aus Salesbooking
+            SKIP_STATUS = {"Storno", "Stornierung", "Stonierung", "cancelled", ""}
+            if status in SKIP_STATUS:
                 continue
             try:
                 anreise = datetime.strptime(row[4].strip(), "%d.%m.%Y")
