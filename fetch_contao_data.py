@@ -194,6 +194,8 @@ def fetch_salesbooking_csv(session, year):
             m = re.search(pattern, txt)
             if m:
                 link = m.group(1)
+                # HTML-Entities dekodieren (&amp; → &, etc.)
+                link = link.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
                 if not link.startswith("http"):
                     link = BASE_URL + "/" + link.lstrip("/")
                 print(f"📎  {label}: Export-Link gefunden → {link[:80]}")
