@@ -201,10 +201,18 @@ def fetch_salesbooking_csv(session, year):
                 print(f"📎  {label}: Export-Link gefunden → {link[:80]}")
                 cr = session.get(link, timeout=60)
                 cr.raise_for_status()
+                cr_ct = cr.headers.get("content-type", "")
+                # Direktes CSV per Content-Type
+                if "text/csv" in cr_ct or "application/csv" in cr_ct:
+                    print(f"✅  {label}: CSV via Link ({len(cr.content):,} Bytes)")
+                    return cr.text
                 cl = cr.text.strip().split("\n")
                 if len(cl) > 5 and sum(1 for l in cl[:3] if ";" in l) >= 2:
                     print(f"✅  {label}: CSV via Link ({len(cr.content):,} Bytes)")
                     return cr.text
+                # Diagnose: was kam zurück?
+                print(f"   Export-Link Content-Type: {cr_ct}")
+                print(f"   Export-Link Zeilen: {len(cl)}, erste 300 Zeichen: {cr.text[:300]!r}")
         return None
 
     try:
