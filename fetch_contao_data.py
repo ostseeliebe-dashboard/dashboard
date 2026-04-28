@@ -69,7 +69,7 @@ EXPORT_FIELDS = [
 # Hilfsfunktionen
 # ──────────────────────────────────────────────────────────────────
 
-def get_request_token(session, url):
+def get_request_token(session: requests.Session, url: str) -> str:
     """Holt den REQUEST_TOKEN von einer Contao-Seite."""
     resp = session.get(url, timeout=30)
     resp.raise_for_status()
@@ -81,7 +81,7 @@ def get_request_token(session, url):
     return match.group(1)
 
 
-def contao_login(session):
+def contao_login(session: requests.Session) -> bool:
     """Loggt sich in das Contao-Backend ein."""
     login_url = f"{BASE_URL}/contao/login"
     print(f"🔐  Login bei {BASE_URL} …")
@@ -101,11 +101,49 @@ def contao_login(session):
     return True
 
 
+def _extract_csv(resp: requests.Response, label: str) -> str | None:
+    """
+    Versucht einen CSV-String aus einem HTTP-Response zu extrahieren.
+    Gibt den CSV-Text zurück oder None wenn kein CSV erkennbar.
+    """
+    content_type = resp.headers.get("content-type", "")
+    text = resp.text
+
+    # Direkte CSV-Antwort
+    if "text/csv" in content_type or "application/csv" in content_type:
+        print(f"✅  {label}: CSV direkt ({len(resp.content):,} Bytes)")
+        return text
+
+    # Plausibilitätsprüfung: Aussehen einer CSV
+    lines = text.strip().split("\n")
+    if len(lines) > 5 and ";" in lines[0]:
+        print(f"✅  {label}: CSV erkannt ({len(lines)} Zeilen)")
+        return text
+
+    # Download-Link in HTML-Antwort
+    match = re.search(r'href="([^"]*\.csv[^"]*)"', text)
+    if match:
+        csv_url = match.group(1)
+        if not csv_url.startswith("http"):
+            csv_url = BASE_URL + "/" + csv_url.lstrip("/")
+        print(f"📎  {label}: Download-Link → {csv_url}")
+        csv_resp = resp.connection.send(
+            resp.request.__class__("GET", csv_url), timeout=60
+        )
+        # Einfacher: neuer GET-Request (Session wird von Aufrufer übergeben)
+        return None  # Fallback – wird vom Aufrufer gehandelt
+
+    print(f"⚠️  {label}: Kein CSV erkannt")
+    print(f"   Content-Type: {content_type}")
+    print(f"   Erste 200 Zeichen: {text[:200]!r}")
+    return None
+
+
 # ──────────────────────────────────────────────────────────────────
 # CSV-Fetch: Journal (abgerechnete Buchungen)
 # ──────────────────────────────────────────────────────────────────
 
-def fetch_journal_csv(session, date_from, date_to):
+def fetch_journal_csv(session: requests.Session, date_from: str, date_to: str) -> str:
     """
     Lädt abgerechnete Buchungen über den Journal-Export.
     date_from / date_to: Format 'DD.MM.YYYY'
@@ -118,7 +156,7 @@ def fetch_journal_csv(session, date_from, date_to):
         ("FORM_ACTION",   "doExport"),
         ("REQUEST_TOKEN", token),
         ("period",        f"{date_from} - {date_to}"),
-        ("selectorfield", "departure"),
+        ("selectorfield", "departure"),  # nach Abreisedatum filtern
         ("object",        ""),
         ("house",         ""),
         ("agent",         ""),
@@ -161,19 +199,22 @@ def fetch_journal_csv(session, date_from, date_to):
 # CSV-Fetch: Salesbooking (alle Buchungen, auch nicht abgerechnet)
 # ──────────────────────────────────────────────────────────────────
 
-def fetch_salesbooking_csv(session, year):
+def fetch_salesbooking_csv(session: requests.Session, year: int) -> str | None:
     """
     Lädt ALLE Buchungen eines Jahres (inkl. noch nicht abgerechnet).
 
-    Strategie:
+    Strategie (je nach Contao-Verhalten):
     1. GET mit submit=Anwenden  → direktes CSV oder HTML mit Export-Link
     2. POST mit doExport        → direktes CSV (wie beim Journal)
+       Token kommt von der Journal-Seite, da die Salesbooking-Seite
+       kein REQUEST_TOKEN-Formularfeld hat.
+    3. POST direkt an fewoOffice_export-URL (falls aus Schritt 1 bekannt)
     Gibt CSV-Text zurück oder None wenn kein Export möglich.
     """
     base_stats = f"{BASE_URL}/contao?do=fewoOffice_stats&key=salesbooking"
     print(f"📥  Salesbooking-Export: Jahr {year} …")
 
-    def _try_get_csv(resp, label):
+    def _try_get_csv(resp: requests.Response, label: str) -> str | None:
         """Prüft ob die Response ein CSV ist oder einen CSV-Link enthält."""
         ct = resp.headers.get("content-type", "")
         txt = resp.text
@@ -226,7 +267,7 @@ def fetch_salesbooking_csv(session, year):
                             if not link2.startswith("http"):
                                 link2 = BASE_URL + "/" + link2.lstrip("/")
                             if link2 == link:
-                                continue
+                                continue  # Endlosschleife vermeiden
                             print(f"📎  {label}: 2. Export-Link → {link2[:80]}")
                             cr2 = session.get(link2, timeout=60)
                             cr2.raise_for_status()
@@ -238,8 +279,9 @@ def fetch_salesbooking_csv(session, year):
                             if len(cl2) > 5 and sum(1 for l in cl2[:3] if ";" in l) >= 2:
                                 print(f"✅  {label}: CSV via 2-stufigem Link ({len(cr2.content):,} Bytes)")
                                 return cr2.text
-                            print(f"   2. Link: {cr2_ct}, {len(cl2)} Zeilen, {cr2.text[:200]!r}")
+                            print(f"   2. Export-Link: {cr2_ct}, {len(cl2)} Zeilen, {cr2.text[:200]!r}")
                             break
+                    # Kein weiterer Link gefunden – alle hrefs auf der Seite loggen
                     all_hrefs = re.findall(r'href="([^"]{5,80})"', cr.text)
                     print(f"   Alle hrefs auf Export-Seite: {all_hrefs[:15]}")
         return None
@@ -254,8 +296,17 @@ def fetch_salesbooking_csv(session, year):
         if result:
             return result
 
-        # ── Schritt 2: POST mit doExport (wie beim Journal) ─────────
-        token = get_request_token(session, base_stats)
+        # ── Schritt 2: POST mit doExport ────────────────────────────
+        # Die Salesbooking-Seite hat kein REQUEST_TOKEN-Feld im HTML,
+        # deshalb holen wir das Token von der Journal-Seite (gleiches
+        # Contao-Backend, Token ist sitzungsweit gültig).
+        journal_url = f"{BASE_URL}/contao?do=fewoOffice_stats&key=journal"
+        try:
+            token = get_request_token(session, journal_url)
+        except RuntimeError:
+            # Fallback: Haupt-Backend-Seite probieren
+            token = get_request_token(session, f"{BASE_URL}/contao")
+
         post_data = [
             ("FORM_ACTION",   "doExport"),
             ("REQUEST_TOKEN", token),
@@ -274,6 +325,22 @@ def fetch_salesbooking_csv(session, year):
         if result:
             return result
 
+        # ── Schritt 3: POST direkt an Export-URL ─────────────────────
+        # Falls der Export-Link aus Schritt 1 bekannt ist, direkt per POST abrufen
+        export_link_match = re.search(
+            r'href="([^"]*fewoOffice_export[^"]*)"', resp1.text
+        )
+        if export_link_match:
+            export_url = export_link_match.group(1).replace("&amp;", "&")
+            if not export_url.startswith("http"):
+                export_url = BASE_URL + "/" + export_url.lstrip("/")
+            print(f"📎  Salesbooking-POST-Export {year}: → {export_url[:100]}")
+            resp3 = session.post(export_url, timeout=60)
+            resp3.raise_for_status()
+            result = _try_get_csv(resp3, f"Salesbooking-POST-Export {year}")
+            if result:
+                return result
+
         # ── Kein CSV gefunden – Diagnose ────────────────────────────
         print(f"⚠️  Salesbooking {year}: Kein CSV-Export verfügbar")
         print(f"   GET  Content-Type: {resp1.headers.get('content-type','?')}")
@@ -291,7 +358,7 @@ def fetch_salesbooking_csv(session, year):
 # CSV-Zusammenführung
 # ──────────────────────────────────────────────────────────────────
 
-def _parse_raw_csv(text):
+def _parse_raw_csv(text: str) -> tuple[list[str], list[str], list[list[str]]]:
     """
     Parst den rohen CSV-Text.
     Gibt (header1, header2, data_rows) zurück.
@@ -304,19 +371,20 @@ def _parse_raw_csv(text):
     return rows[0], rows[1], rows[2:]
 
 
-def _vorgang_id(row):
+def _vorgang_id(row: list[str]) -> str:
     """
     Gibt die Vorgangsnummer (row[7]) als Deduplizierungsschlüssel zurück.
     Fallback: Kombination aus Objekt+Anreise.
     """
     if len(row) > 7 and row[7].strip():
         return row[7].strip()
+    # Fallback: objekt_nr + anreise
     obj = row[0].strip() if len(row) > 0 else ""
     arr = row[4].strip() if len(row) > 4 else ""
     return f"{obj}_{arr}"
 
 
-def merge_csvs(journal_csv, salesbooking_results):
+def merge_csvs(journal_csv: str, salesbooking_results: dict[int, str]) -> str:
     """
     Führt Journal-CSV und Salesbooking-CSVs zusammen.
 
@@ -327,7 +395,8 @@ def merge_csvs(journal_csv, salesbooking_results):
     """
     header1, header2, journal_rows = _parse_raw_csv(journal_csv)
 
-    seen_ids = set()
+    # Alle Vorgangsnummern aus dem Journal merken
+    seen_ids: set[str] = set()
     valid_journal_rows = []
     for row in journal_rows:
         if len(row) < 10:
@@ -338,7 +407,7 @@ def merge_csvs(journal_csv, salesbooking_results):
 
     print(f"📊  Journal: {len(valid_journal_rows)} Buchungen")
 
-    new_rows = []
+    new_rows: list[list[str]] = []
     for year, sb_csv in sorted(salesbooking_results.items()):
         if not sb_csv:
             continue
@@ -351,6 +420,7 @@ def merge_csvs(journal_csv, salesbooking_results):
             if len(row) < 10:
                 skipped_short += 1
                 continue
+            # Status-Check: Stornos überspringen
             status = row[9].strip() if len(row) > 9 else ""
             if status in ("Storno", "Stornierung", "Stonierung", "cancelled"):
                 continue
@@ -358,6 +428,7 @@ def merge_csvs(journal_csv, salesbooking_results):
             if vid in seen_ids:
                 skipped_dup += 1
                 continue
+            # Zeile auf Journal-Spaltenbreite normalisieren
             if header2:
                 target_len = len(header2)
                 if len(row) < target_len:
@@ -374,6 +445,7 @@ def merge_csvs(journal_csv, salesbooking_results):
     all_rows = valid_journal_rows + new_rows
     print(f"✅  Gesamt nach Merge: {len(all_rows)} Buchungen")
 
+    # CSV rekonstruieren (mit den originalen 2 Kopfzeilen)
     output = io.StringIO()
     writer = csv.writer(output, delimiter=";", quoting=csv.QUOTE_MINIMAL,
                         lineterminator="\n")
@@ -422,8 +494,8 @@ def main():
     # 2. Journal-CSV (abgerechnete Buchungen, gesamter Zeitraum)
     journal_csv = fetch_journal_csv(session, args.date_from, args.date_to)
 
-    # 3. Salesbooking für aktuelles + nächstes Jahr
-    salesbooking_results = {}
+    # 3. Salesbooking für aktuelles + nächstes Jahr (nicht abgerechnete Buchungen)
+    salesbooking_results: dict[int, str] = {}
     if not args.no_salesbooking:
         current_year = datetime.today().year
         for year in [current_year, current_year + 1]:
