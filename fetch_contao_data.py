@@ -208,7 +208,7 @@ def fetch_salesbooking_csv(session: requests.Session, year: int) -> str | None:
     2. POST mit doExport        → direktes CSV (wie beim Journal)
        Token kommt von der Journal-Seite, da die Salesbooking-Seite
        kein REQUEST_TOKEN-Formularfeld hat.
-    3. POST direkt an fewoOffice_export-URL (falls aus Schritt 1 bekannt)
+    3. GET alle fewoOffice_export-Links aus resp1 (JS-Seite analysieren)
     Gibt CSV-Text zurück oder None wenn kein Export möglich.
     """
     base_stats = f"{BASE_URL}/contao?do=fewoOffice_stats&key=salesbooking"
@@ -254,6 +254,7 @@ def fetch_salesbooking_csv(session: requests.Session, year: int) -> str | None:
                 # HTML-Antwort: Export-Seite nach dem echten Download-Link durchsuchen
                 if "text/html" in cr_ct:
                     print(f"   Export-Seite ist HTML ({len(cl)} Zeilen) – suche Download-Link …")
+                    # 1. HTML-Links durchsuchen
                     for pattern2 in [
                         r'href="([^"]*\.csv[^"]*)"',
                         r'href="([^"]*fewoOffice_export[^"]*)"',
@@ -266,10 +267,12 @@ def fetch_salesbooking_csv(session: requests.Session, year: int) -> str | None:
                             link2 = link2.replace("&amp;", "&").replace("&lt;", "<")
                             if not link2.startswith("http"):
                                 link2 = BASE_URL + "/" + link2.lstrip("/")
-                            if link2 == link:
+                            # Fragment (#...) entfernen für HTTP-Request
+                            link2_clean = link2.split("#")[0]
+                            if link2_clean == link:
                                 continue  # Endlosschleife vermeiden
-                            print(f"📎  {label}: 2. Export-Link → {link2[:80]}")
-                            cr2 = session.get(link2, timeout=60)
+                            print(f"📎  {label}: 2. Export-Link → {link2_clean[:80]}")
+                            cr2 = session.get(link2_clean, timeout=60)
                             cr2.raise_for_status()
                             cr2_ct = cr2.headers.get("content-type", "")
                             if "text/csv" in cr2_ct or "application/csv" in cr2_ct:
@@ -281,7 +284,50 @@ def fetch_salesbooking_csv(session: requests.Session, year: int) -> str | None:
                                 return cr2.text
                             print(f"   2. Export-Link: {cr2_ct}, {len(cl2)} Zeilen, {cr2.text[:200]!r}")
                             break
-                    # Kein weiterer Link gefunden – alle hrefs auf der Seite loggen
+                    # 2. JavaScript-Quelltext nach Download-URLs durchsuchen
+                    scripts = re.findall(
+                        r'<script[^>]*>(.*?)</script>', cr.text,
+                        re.DOTALL | re.IGNORECASE
+                    )
+                    script_blob = "\n".join(scripts)
+                    js_urls_found = []
+                    for js_pat in [
+                        r'(?:window\.location(?:\.href)?\s*[=]|location\.replace\(|location\.assign\()\s*["\'\']([^"\'\'{10,})["\'\']',
+                        r'["\'\']([^"\'\']fewoOffice_export[^"\'\'{3,})["\'\']',
+                        r'["\'\']([^"\'\']fewoOffice[^"\'\']key=download[^"\'\'])["\'\']',
+                        r'src\s*=\s*["\'\']([^"\'\']fewoOffice[^"\'\'])["\'\']',
+                        r'["\'\']([^"\'\']\bdownload\b[^"\'\'])["\'\']',
+                    ]:
+                        for js_m in re.finditer(js_pat, script_blob, re.IGNORECASE):
+                            u = js_m.group(1).replace("\\/", "/").replace("&amp;", "&")
+                            if u not in js_urls_found:
+                                js_urls_found.append(u)
+                    if js_urls_found:
+                        print(f"   JS-URLs: {js_urls_found[:5]}")
+                        for js_url in js_urls_found[:3]:
+                            if not js_url.startswith("http"):
+                                js_url = BASE_URL + "/" + js_url.lstrip("/")
+                            try:
+                                crj = session.get(js_url, timeout=30)
+                                crj.raise_for_status()
+                                crj_ct = crj.headers.get("content-type", "")
+                                if "text/csv" in crj_ct or "application/csv" in crj_ct:
+                                    print(f"✅  {label}: CSV via JS-URL ({len(crj.content):,} Bytes)")
+                                    return crj.text
+                                clj = crj.text.strip().split("\n")
+                                if len(clj) > 5 and sum(1 for l in clj[:3] if ";" in l) >= 2:
+                                    print(f"✅  {label}: CSV via JS-URL ({len(crj.content):,} Bytes)")
+                                    return crj.text
+                                print(f"   JS-URL {crj_ct}: {crj.text[:150]!r}")
+                            except Exception as je:
+                                print(f"   JS-URL Fehler: {je}")
+                    else:
+                        # Kein JS-URL gefunden – relevante Script-Zeilen loggen
+                        relevant = [l.strip() for l in script_blob.splitlines()
+                                    if any(kw in l.lower() for kw in
+                                           ['location', 'download', 'export', 'csv', 'fewo', 'href', 'src', 'fetch', 'xhr', 'ajax'])]
+                        print(f"   Script-Zeilen (relevant): {relevant[:10]}")
+                    # Alle hrefs (Diagnose)
                     all_hrefs = re.findall(r'href="([^"]{5,80})"', cr.text)
                     print(f"   Alle hrefs auf Export-Seite: {all_hrefs[:15]}")
         return None
@@ -325,21 +371,24 @@ def fetch_salesbooking_csv(session: requests.Session, year: int) -> str | None:
         if result:
             return result
 
-        # ── Schritt 3: POST direkt an Export-URL ─────────────────────
-        # Falls der Export-Link aus Schritt 1 bekannt ist, direkt per POST abrufen
-        export_link_match = re.search(
-            r'href="([^"]*fewoOffice_export[^"]*)"', resp1.text
-        )
-        if export_link_match:
-            export_url = export_link_match.group(1).replace("&amp;", "&")
+        # ── Schritt 3: GET direkt an Export-URL (alle fewoOffice_export-Links) ──
+        # Alle fewoOffice_export-Links aus resp1 sammeln und per GET abrufen
+        all_export_links = list(dict.fromkeys(
+            m.group(1).replace("&amp;", "&").split("#")[0]
+            for m in re.finditer(r'href="([^"]*fewoOffice_export[^"]*)"', resp1.text)
+        ))
+        for export_url in all_export_links[:3]:
             if not export_url.startswith("http"):
                 export_url = BASE_URL + "/" + export_url.lstrip("/")
-            print(f"📎  Salesbooking-POST-Export {year}: → {export_url[:100]}")
-            resp3 = session.post(export_url, timeout=60)
-            resp3.raise_for_status()
-            result = _try_get_csv(resp3, f"Salesbooking-POST-Export {year}")
-            if result:
-                return result
+            print(f"📎  Salesbooking-GET-Export {year}: → {export_url[:100]}")
+            try:
+                resp3 = session.get(export_url, timeout=60)
+                resp3.raise_for_status()
+                result = _try_get_csv(resp3, f"Salesbooking-GET-Export {year}")
+                if result:
+                    return result
+            except Exception as exc3:
+                print(f"   GET-Export-Fehler: {exc3}")
 
         # ── Kein CSV gefunden – Diagnose ────────────────────────────
         print(f"⚠️  Salesbooking {year}: Kein CSV-Export verfügbar")
