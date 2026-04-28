@@ -282,6 +282,61 @@ def _vorgang_id(row: list[str]) -> str:
     return f"{obj}_{arr}_{dep}"
 
 
+def _parse_salesbooking_csv(text: str, target_len: int) -> list[list[str]]:
+    """
+    Parst Salesbooking-CSV mit 5 Spalten:
+        Anreise;Abreise;Objekt;Übernachtungen;Übernachtungspreis
+
+    Gibt journal-kompatible Zeilen zurück (aufgefüllt auf target_len Spalten).
+    Spalten-Mapping zum Journal-Format:
+        col 0 = ''          (Objekt-Nr. – nicht verfügbar)
+        col 1 = Objekt      (Unterkunftsname)
+        col 4 = Anreise
+        col 5 = Abreise
+        col 6 = Übernachtungen (Nächte)
+        col 9 = 'Aktiv'     (Status – synthetisch)
+        col 11= Übernachtungspreis (Reisepreis)
+
+    Nur Buchungen mit Anreise >= heute werden øbernommen, da der Journal-Export
+    bereits alle abgerechneten (= vergangenen) Buchungen enthält.
+    """
+    reader = csv.reader(io.StringIO(text), delimiter=";")
+    rows = list(reader)
+    if len(rows) < 2:
+        return []
+
+    today = datetime.today().date()
+    result = []
+    for row in rows[1:]:          # Zeile 0 ist die Kopfzeile
+        if len(row) < 5:
+            continue
+        arrival_str = row[0].strip()
+        departure   = row[1].strip()
+        obj_name    = row[2].strip()
+        nights      = row[3].strip()
+        price       = row[4].strip()
+
+        # Nur zukünftige Anreisen (noch nicht im Journal abgerechnet)
+        try:
+            arr_date = datetime.strptime(arrival_str, "%d.%m.%Y").date()
+        except ValueError:
+            continue
+        if arr_date < today:
+            continue
+
+        # Journal-kompatible Zeile aufbauen
+        compat = [""] * max(target_len, 12)
+        compat[1]  = obj_name
+        compat[4]  = arrival_str
+        compat[5]  = departure
+        compat[6]  = nights
+        compat[7]  = "Buchung"
+        compat[9]  = "Aktiv"
+        compat[11] = price
+        result.append(compat[:target_len] if target_len else compat)
+    return result
+
+
 def merge_csvs(journal_csv: str, salesbooking_results: dict[int, str]) -> str:
     """
     Führt Journal-CSV und Salesbooking-CSVs zusammen.
@@ -292,6 +347,7 @@ def merge_csvs(journal_csv: str, salesbooking_results: dict[int, str]) -> str:
     - Das Format des Journal-CSV wird beibehalten (2 Kopfzeilen).
     """
     header1, header2, journal_rows = _parse_raw_csv(journal_csv)
+    target_len = len(header2) if header2 else 31
 
     # Alle Vorgangsnummern aus dem Journal merken
     seen_ids: set[str] = set()
@@ -309,36 +365,27 @@ def merge_csvs(journal_csv: str, salesbooking_results: dict[int, str]) -> str:
     for year, sb_csv in sorted(salesbooking_results.items()):
         if not sb_csv:
             continue
-        sb_h1, sb_h2, sb_data = _parse_raw_csv(sb_csv)
+
+        # Salesbooking-CSV hat 5-Spalten-Format → speziellen Parser verwenden
+        sb_rows = _parse_salesbooking_csv(sb_csv, target_len)
         added = 0
         skipped_dup = 0
-        skipped_short = 0
 
-        for row in sb_data:
-            if len(row) < 10:
-                skipped_short += 1
-                continue
-            # Status-Check: Stornos øberspringen
-            status = row[9].strip() if len(row) > 9 else ""
-            if status in ("Storno", "Stornierung", "Stonierung", "Storniert", "cancelled"):
-                continue
-            vid = _vorgang_id(row)
+        for row in sb_rows:
+            # Dedup-Schlüssel: Unterkunftsname + Anreise + Abreise
+            name = row[1].strip()
+            arr  = row[4].strip()
+            dep  = row[5].strip()
+            vid  = f"SB_{name}_{arr}_{dep}"
             if vid in seen_ids:
                 skipped_dup += 1
                 continue
-            # Zeile auf Journal-Spaltenbreite normalisieren
-            if header2:
-                target_len = len(header2)
-                if len(row) < target_len:
-                    row = row + [""] * (target_len - len(row))
-                elif len(row) > target_len:
-                    row = row[:target_len]
             new_rows.append(row)
             seen_ids.add(vid)
             added += 1
 
         print(f"📊  Salesbooking {year}: {added} neue Buchungen ergänzt "
-              f"({skipped_dup} Duplikate, {skipped_short} ungültige Zeilen)")
+              f"({skipped_dup} Duplikate)")
 
     all_rows = valid_journal_rows + new_rows
     print(f"✅  Gesamt nach Merge: {len(all_rows)} Buchungen")
@@ -392,7 +439,7 @@ def main():
     # 2. Journal-CSV (abgerechnete Buchungen, gesamter Zeitraum)
     journal_csv = fetch_journal_csv(session, args.date_from, args.date_to)
 
-    # 3. Salesbooking før aktuelles + nächstes Jahr (nicht abgerechnete Buchungen)
+    # 3. Salesbooking für aktuelles + nächstes Jahr (nicht abgerechnete Buchungen)
     salesbooking_results: dict[int, str] = {}
     if not args.no_salesbooking:
         current_year = datetime.today().year
