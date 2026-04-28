@@ -206,9 +206,6 @@ def fetch_salesbooking_csv(session: requests.Session, year: int) -> str | None:
     Strategie (je nach Contao-Verhalten):
     1. GET mit submit=Anwenden  → direktes CSV oder HTML mit Export-Link
     2. POST mit doExport        → direktes CSV (wie beim Journal)
-       Token kommt von der Journal-Seite, da die Salesbooking-Seite
-       kein REQUEST_TOKEN-Formularfeld hat.
-    3. GET alle fewoOffice_export-Links aus resp1 (JS-Seite analysieren)
     Gibt CSV-Text zurück oder None wenn kein Export möglich.
     """
     base_stats = f"{BASE_URL}/contao?do=fewoOffice_stats&key=salesbooking"
@@ -290,43 +287,19 @@ def fetch_salesbooking_csv(session: requests.Session, year: int) -> str | None:
                         re.DOTALL | re.IGNORECASE
                     )
                     script_blob = "\n".join(scripts)
-                    js_urls_found = []
-                    for js_pat in [
-                        r'(?:window\.location(?:\.href)?\s*[=]|location\.replace\(|location\.assign\()\s*["\'\']([^"\'\'{10,})["\'\']',
-                        r'["\'\']([^"\'\']fewoOffice_export[^"\'\'{3,})["\'\']',
-                        r'["\'\']([^"\'\']fewoOffice[^"\'\']key=download[^"\'\'])["\'\']',
-                        r'src\s*=\s*["\'\']([^"\'\']fewoOffice[^"\'\'])["\'\']',
-                        r'["\'\']([^"\'\']\bdownload\b[^"\'\'])["\'\']',
-                    ]:
-                        for js_m in re.finditer(js_pat, script_blob, re.IGNORECASE):
-                            u = js_m.group(1).replace("\\/", "/").replace("&amp;", "&")
-                            if u not in js_urls_found:
-                                js_urls_found.append(u)
-                    if js_urls_found:
-                        print(f"   JS-URLs: {js_urls_found[:5]}")
-                        for js_url in js_urls_found[:3]:
-                            if not js_url.startswith("http"):
-                                js_url = BASE_URL + "/" + js_url.lstrip("/")
-                            try:
-                                crj = session.get(js_url, timeout=30)
-                                crj.raise_for_status()
-                                crj_ct = crj.headers.get("content-type", "")
-                                if "text/csv" in crj_ct or "application/csv" in crj_ct:
-                                    print(f"✅  {label}: CSV via JS-URL ({len(crj.content):,} Bytes)")
-                                    return crj.text
-                                clj = crj.text.strip().split("\n")
-                                if len(clj) > 5 and sum(1 for l in clj[:3] if ";" in l) >= 2:
-                                    print(f"✅  {label}: CSV via JS-URL ({len(crj.content):,} Bytes)")
-                                    return crj.text
-                                print(f"   JS-URL {crj_ct}: {crj.text[:150]!r}")
-                            except Exception as je:
-                                print(f"   JS-URL Fehler: {je}")
-                    else:
-                        # Kein JS-URL gefunden – relevante Script-Zeilen loggen
-                        relevant = [l.strip() for l in script_blob.splitlines()
-                                    if any(kw in l.lower() for kw in
-                                           ['location', 'download', 'export', 'csv', 'fewo', 'href', 'src', 'fetch', 'xhr', 'ajax'])]
-                        print(f"   Script-Zeilen (relevant): {relevant[:10]}")
+                    # Erste 500 Zeichen jedes Scripts für Diagnose
+                    for si, sc in enumerate(scripts):
+                        sc = sc.strip()
+                        if sc and len(sc) > 30:
+                            print(f"   Script[{si}] ({len(sc)}c): {sc[:300]!r}")
+                    # Einfache URL-Suche: fewoOffice-Referenzen im JS
+                    fewo_refs = re.findall(r'fewoOffice[^\s"\'<>]{3,60}', script_blob)
+                    if fewo_refs:
+                        print(f"   fewoOffice-Refs im JS: {fewo_refs[:5]}")
+                    # window.location / location.href im JS
+                    loc_refs = re.findall(r'location[^\s;,]{3,80}', script_blob)
+                    if loc_refs:
+                        print(f"   location-Refs im JS: {loc_refs[:5]}")
                     # Alle hrefs (Diagnose)
                     all_hrefs = re.findall(r'href="([^"]{5,80})"', cr.text)
                     print(f"   Alle hrefs auf Export-Seite: {all_hrefs[:15]}")
@@ -524,7 +497,7 @@ def main():
     parser.add_argument("--out", default=OUT_CSV,
                         help=f"Ausgabedatei (default: {OUT_CSV})")
     parser.add_argument("--no-salesbooking", action="store_true",
-                        help="Salesbooking-Fetch überspringen (nur Journal)")
+                        help="Salesbooking-Fetch øberspringen (nur Journal)")
     args = parser.parse_args()
 
     if not USERNAME or not PASSWORD:
@@ -552,13 +525,13 @@ def main():
             if result:
                 salesbooking_results[year] = result
     else:
-        print("ℹ️  Salesbooking übersprungen (--no-salesbooking)")
+        print("ℹ️  Salesbooking øbersprungen (--no-salesbooking)")
 
-    # 4. Zusammenführen
+    # 4. Zusammenføhren
     if salesbooking_results:
         merged_csv = merge_csvs(journal_csv, salesbooking_results)
     else:
-        print("ℹ️  Kein Salesbooking verfügbar – nur Journal-Daten")
+        print("ℹ️  Kein Salesbooking verføgbar – nur Journal-Daten")
         merged_csv = journal_csv
 
     # 5. Speichern
