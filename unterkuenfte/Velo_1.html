@@ -34,7 +34,7 @@
 <body>
     <div class="header">
         <h1>Velo 1</h1>
-        <div class="sub">Zingst — Umsatzübersicht — Stand 28.04.2026 19:01</div>
+        <div class="sub">Zingst — Umsatzübersicht — Stand 28.04.2026 19:17</div>
     </div>
     <div class="container">
         <div class="chart-section">
@@ -67,15 +67,40 @@
                 </div>
             </div>
         </div>
+        <div class="section">
+            <h2>2026</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">2</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">19</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">1.635,00 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">0,00 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">0,00 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">0,00 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">0,0 %</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">86,05 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">9,5 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">5,2 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>(leer)</td><td class="num">2</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <p style='color:#aaa;'>Keine Zusatzkosten</p>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         new Chart(document.getElementById('yearChart'), {
             type: 'bar',
             data: {
-                labels: [2025],
+                labels: [2025, 2026],
                 datasets: [
-                    { label: 'Reisepreis', data: [4420.19], backgroundColor: '#0066cc', borderRadius: 4 },
-                    { label: 'Miete Eigentümer', data: [2089.53], backgroundColor: '#00aaaa', borderRadius: 4 }
+                    { label: 'Reisepreis', data: [4420.19, 1635.0], backgroundColor: '#0066cc', borderRadius: 4 },
+                    { label: 'Miete Eigentümer', data: [2089.53, 0.0], backgroundColor: '#00aaaa', borderRadius: 4 }
                 ]
             },
             options: {
