@@ -47,7 +47,7 @@ APARTMENTHAUS_MAPPING = {
     "Haus Darssduett": [{"nr":279,"name":"Darss-Duett 1"},{"nr":290,"name":"Darss-Duett 2"}],
     "Haus Darßer Sonnenfisch": [{"nr":228,"name":"Clownfisch"},{"nr":247,"name":"Sonnendeck"}],
     "Häuser Haseneck": [{"nr":129,"name":"DAT KROEGER HUS"},{"nr":139,"name":"Kranschehus"}],
-    "Haus Hoppenberg Strandquartier": [{"nr":145,"name":"Bärbel"},{"nr":144,"name":"Lotta"}],
+  2 "Haus Hoppenberg Strandquartier": [{"nr":145,"name":"Bärbel"},{"nr":144,"name":"Lotta"}],
     "Haus im Zentrum": [{"nr":114,"name":"Ocean Star"},{"nr":99,"name":"Rewal"},{"nr":115,"name":"Strandhaus Zingst"}],
     "Haus In den Wiesen": [{"nr":282,"name":"In den Wiesen App. 2"},{"nr":227,"name":"In den Wiesen 3"}],
     "Haus Kraanstiet": [{"nr":293,"name":"Kraanstiet 1"},{"nr":294,"name":"Kraanstiet 2"},{"nr":295,"name":"Kraanstiet 3"}],
@@ -70,7 +70,7 @@ APARTMENTHAUS_MAPPING = {
     "Residenz am Strand": [{"nr":151,"name":"Residenz 114"},{"nr":152,"name":"Residenz 120"},{"nr":153,"name":"Residenz 123"},{"nr":155,"name":"Residenz 232"},{"nr":156,"name":"Residenz 238"},{"nr":157,"name":"Residenz 242"},{"nr":159,"name":"Residenz 352"},{"nr":161,"name":"Residenz 567"},{"nr":162,"name":"Residenz 677"}],
     "Residenz Kormoran": [{"nr":276,"name":"Ankerzeit H7"},{"nr":238,"name":"Meerzeit D6"},{"nr":245,"name":"Windflüchter F5"}],
     "Speicherresidenz Barth": [{"nr":29,"name":"App. 1.5"},{"nr":30,"name":"App. 0.2"},{"nr":31,"name":"App. 0.3"},{"nr":32,"name":"App. 2.1"},{"nr":33,"name":"App. 2.2"},{"nr":34,"name":"App. 3.3"},{"nr":35,"name":"App. 3.4"},{"nr":36,"name":"App. 3.7"},{"nr":37,"name":"App. 3.11"},{"nr":38,"name":"App. 3.1"},{"nr":39,"name":"App. 4.10"},{"nr":40,"name":"App. 4.11"},{"nr":41,"name":"App. 4.7"},{"nr":42,"name":"App. 4.6"},{"nr":43,"name":"App. 5.6"},{"nr":44,"name":"App. 5.9"},{"nr":45,"name":"App. 5.10"},{"nr":46,"name":"App. 6.1"},{"nr":47,"name":"App. 4.4"},{"nr":48,"name":"App. 2.3"},{"nr":49,"name":"App. 5.11"},{"nr":50,"name":"App. 7.1"}],
-    "Strandapartments Düne 7": [{"nr":70,"name":"Düne 7 Whg. 3"},{"nr":71,"name":"Düne 7 Whg. 5"},{"nr":72,"name":"Düne 7 Whg. 6"},{"nr":73,"name":"Düne 7 Whg. 7"},{"nr":74,"name":"Düne 7 Whg. 8"},{"nr":75,"name":"Düne 7 Whg. 9"},{"nr":76,"name":"Düne 7 Whg. 10"}],
+    "Strandapartments Døne 7": [{"nr":70,"name":"Düne 7 Whg. 3"},{"nr":71,"name":"Düne 7 Whg. 5"},{"nr":72,"name":"Düne 7 Whg. 6"},{"nr":73,"name":"Düne 7 Whg. 7"},{"nr":74,"name":"Düne 7 Whg. 8"},{"nr":75,"name":"Düne 7 Whg. 9"},{"nr":76,"name":"Düne 7 Whg. 10"}],
     "Strandresort Fuhlendorf": [{"nr":204,"name":"Luv"},{"nr":284,"name":"Sonnenbirke"},{"nr":248,"name":"Sonnenzauber"}],
     "Villa Seeluft": [{"nr":100,"name":"Seeluft 3"},{"nr":150,"name":"Seeluft 8"}],
     "Villa Strandoase Rosenberg": [{"nr":211,"name":"Küstenkajüte Whg.1"},{"nr":212,"name":"Küstenkajüte Whg.2"},{"nr":213,"name":"Küstenkajüte Whg.5"},{"nr":214,"name":"Küstenkajüte Whg.7"}],
@@ -187,7 +187,7 @@ def read_bookings(csv_path):
         header1 = next(reader)
         header2 = next(reader)
 
-        # Parse Zusatzkosten column pairs (Vermittler at odd idx, Eigentümer at idx+1)
+        # Parse Zusatzkosten column pairs (Vermittler at odd idx, Eigentømer at idx+1)
         for i in range(17, len(header1), 2):
             name = header1[i].strip()
             if name:
@@ -613,7 +613,7 @@ def generate_html(data):
 
         bestand_html = f'''
         <div class="year-section">
-            <h3 class="year-title">Bestand – Buchbare Unterkünfte (Online)</h3>
+            <h3 class="year-title">Bestand – Buchbare Unterkønfte (Online)</h3>
             <div class="kpi-grid">
                 <div class="kpi-card" style="border-left:4px solid #28a745">
                     <div class="kpi-label">Unterkünfte</div>
@@ -1464,6 +1464,71 @@ def generate_html(data):
     }})();
     </script>'''
 
+    # --- Build Umsatz-Ranking tab HTML ---
+    ranking_data = []
+    for pname, pd in property_data.items():
+        total_umsatz = sum(pd["years"].get(y, {}).get("reisepreis", 0) for y in years)
+        if total_umsatz == 0:
+            continue
+        ranking_data.append({
+            "name": pname,
+            "ort": pd["ort"],
+            "total": total_umsatz,
+            "per_year": {y: pd["years"].get(y, {}).get("reisepreis", 0) for y in years},
+            "buchungen": sum(pd["years"].get(y, {}).get("buchungen", 0) for y in years),
+        })
+    ranking_data.sort(key=lambda x: -x["total"])
+
+    max_umsatz = ranking_data[0]["total"] if ranking_data else 1
+    year_headers_r = "".join(f'<th class="num">{y}</th>' for y in years)
+    ranking_rows = ""
+    MEDALS = {1: "&#127949;", 2: "&#127950;", 3: "&#127951;"}
+    for i, item in enumerate(ranking_data, 1):
+        bar_pct = round(item["total"] / max_umsatz * 100)
+        medal = MEDALS.get(i, f"<span style='color:#999;font-size:12px'>#{i}</span>")
+        _dash = "<span style=\"color:#ccc\">&#8211;</span>"
+        year_cells = "".join(
+            '<td class="num">' + (format_euro(item["per_year"].get(y, 0)) if item["per_year"].get(y, 0) > 0 else _dash) + '</td>'
+            for y in years
+        )
+        row_style = " style='background:#fffef0'" if i <= 3 else ""
+        ranking_rows += f'''
+                <tr{row_style}>
+                    <td class="num" style="font-size:15px;text-align:center;width:52px">{medal}</td>
+                    <td>
+                        <span style="font-weight:500">{item["name"]}</span>
+                        <div class="rank-bar-bg"><div class="rank-bar" style="width:{bar_pct}%"></div></div>
+                    </td>
+                    <td style="color:#666;font-size:12px">{item["ort"]}</td>
+                    {year_cells}
+                    <td class="num"><strong style="color:var(--color-primary)">{format_euro(item["total"])}</strong></td>
+                </tr>'''
+
+    yr_range = f"{min(years)}\u2013{max(years)}" if years else ""
+    umsatz_ranking_html = f'''
+    <div class="chart-container">
+        <h3>&#127942; Umsatz-Ranking nach Unterkunft</h3>
+        <p style="color:#666;font-size:13px;margin-bottom:20px;">
+            Gesamtumsatz (Reisepreis) {yr_range}. Platz\u00a01\u00a0=\u00a0st\u00e4rkste Unterkunft &mdash; alle {len(ranking_data)} Unterk\u00fcnfte mit Buchungen im Zeitraum.
+        </p>
+        <div style="overflow-x:auto;">
+        <table class="prov-table">
+            <thead>
+                <tr>
+                    <th style="width:52px;text-align:center">Rang</th>
+                    <th>Unterkunft</th>
+                    <th>Ort</th>
+                    {year_headers_r}
+                    <th class="num">Gesamt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {ranking_rows}
+            </tbody>
+        </table>
+        </div>
+    </div>'''
+
     TABS = [
         ("uebersicht",        "\u00dcbersicht"),
         ("jahresvergleich",   "Jahresvergleich"),
@@ -1471,6 +1536,7 @@ def generate_html(data):
         ("orte",              "Orte"),
         ("zusatzkosten",      "Zusatzkosten"),
         ("provisionen",       "Provisionen"),
+        ("umsatz_ranking",    "Umsatz-Ranking"),
         ("apartmenthaeuser",  "Apartmenthaus"),
         ("unterkunft_detail", "Unterkunft Detail"),
     ]
@@ -1517,6 +1583,7 @@ def generate_html(data):
         </div>
         ''' + prov_tab_html
         ),
+        "umsatz_ranking": umsatz_ranking_html,
         "apartmenthaeuser": apartmenthaus_tab_html,
         "unterkunft_detail": (
             '''<div class="chart-container">
@@ -1758,6 +1825,18 @@ def generate_html(data):
         .prov-total {{
             background: #f0f4f8 !important;
             border-top: 2px solid var(--color-primary);
+        }}
+        .rank-bar-bg {{
+            background: #eef2f7;
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 4px;
+            width: 160px;
+        }}
+        .rank-bar {{
+            height: 4px;
+            border-radius: 2px;
+            background: var(--color-primary);
         }}
         .pk-value.green {{
             color: #2e7d32 !important;
