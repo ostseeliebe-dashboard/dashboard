@@ -1,25 +1,25 @@
 # .github/workflows/daily-update.yml
 #
-# Taeglich um 06:00 Uhr:
-#   1. Buchungs-CSV aus Contao herunterladen
-#   2. Dashboard neu generieren (gen_dash.py)
-#      (inkl. Apartmenthaus-Tab - direkt integriert)
-#   3. Geaenderte HTML-Dateien committen und pushen
+# Taeglich um 08:00 Uhr MESZ (= 06:00 UTC):
+# 1. Buchungs-CSV aus Contao herunterladen
+# 2. Dashboard neu generieren (gen_dash.py)
+#    (inkl. Apartmenthaus-Tab - direkt integriert)
+# 3. Geaenderte HTML-Dateien committen und pushen
 #
 # Benoetigte GitHub Secrets (Settings -> Secrets -> Actions):
-#   CONTAO_URL   https://www.ostseeliebe-ferienwohnungen.de
-#   CONTAO_USER  Contao-Benutzername
-#   CONTAO_PASS  Contao-Passwort
+#   CONTAO_URL  https://www.ostseeliebe-ferienwohnungen.de
+#   CONTAO_USER Contao-Benutzername
+#   CONTAO_PASS Contao-Passwort
 
 name: Taegliches Dashboard-Update
 
 on:
   schedule:
-    - cron: "0 5 * * *"   # taeglich 06:00 Uhr MEZ (= 05:00 UTC)
-  workflow_dispatch:        # manueller Start ueber GitHub-Oberflaeche
+    - cron: "0 6 * * *"  # taeglich 08:00 Uhr MESZ (= 06:00 UTC)
+  workflow_dispatch:      # manueller Start ueber GitHub-Oberflaeche
 
 permissions:
-  contents: write           # zum Committen noetig
+  contents: write  # zum Committen noetig
 
 jobs:
   update-dashboard:
@@ -60,7 +60,7 @@ jobs:
           CONTAO_PASS: ${{ secrets.CONTAO_PASS }}
         run: |
           python fetch_property_data.py --out Objektstammdaten.xlsx
-        continue-on-error: true   # Dashboard funktioniert auch ohne (nur ohne Stammdaten)
+        continue-on-error: true  # Dashboard funktioniert auch ohne (nur ohne Stammdaten)
 
       # -- 6. Dashboard generieren (inkl. Apartmenthaus-Tab) --
       - name: Dashboard generieren (gen_dash.py)

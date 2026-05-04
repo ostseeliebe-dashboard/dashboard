@@ -493,16 +493,33 @@ def fetch_preisliste_data(session: requests.Session) -> dict | None:
             print(f"  ⚠️  {pl['name']}: {e}")
             continue
 
+        # HTML-Entities dekodieren und Tags entfernen → sauberer Text
+        import html as _html_mod
+        clean = _html_mod.unescape(sub_html)
+        clean = re.sub(r'<[^>]+>', ' ', clean)   # Tags durch Leerzeichen ersetzen
+        clean = re.sub(r'\s+', ' ', clean)        # Mehrfach-Whitespace normieren
+
         # Abschnitt für aktuelles Jahr finden
-        year_m = re.search(
-            r'fewo_toggler[^>]*>\s*' + re.escape(current_year) + r'\s*<.*?(?=fewo_toggler|$)',
-            sub_html, re.DOTALL
-        )
-        section = year_m.group(0) if year_m else sub_html
+        year_idx = clean.find(current_year)
+        if year_idx >= 0:
+            # Nächstes Jahr als Grenze (oder Ende)
+            next_year = str(int(current_year) + 1)
+            next_idx  = clean.find(next_year, year_idx + 4)
+            section   = clean[year_idx: next_idx] if next_idx > year_idx else clean[year_idx:]
+        else:
+            section = clean  # Fallback: ganzer Text
+
+        # Debug: erste Preisliste einmal loggen
+        if pl == price_lists[0]:
+            print(f'  🔍  Debug Sektion (200 Z.): {section[:200]}')
 
         prices = {}
-        for pm in re.finditer(r'Saison\s+(.+?)\s+([\d.,]+)\s*€', section):
-            season = pm.group(1).strip()
+        # Muster: "Saison Winter 60,00 €" oder "Saison Strandzeit I 115,00 €"
+        for pm in re.finditer(
+            r'Saison\s+([A-Za-zÄÖÜäöüß\s\-–/]+?)\s+([\d]+[.,][\d]{2})\s*(?:€|&euro;|&#8364;)',
+            section
+        ):
+            season = pm.group(1).strip().rstrip('-–').strip()
             try:
                 prices[season] = float(pm.group(2).replace('.', '').replace(',', '.'))
             except ValueError:
