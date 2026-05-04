@@ -250,7 +250,7 @@ def fetch_salesbooking_csv(session: requests.Session, year: int) -> str | None:
 
 
 # ──────────────────────────────────────────────────────────────────
-# CSV-Zusammenføhrung
+# CSV-Zusammenführung
 # ──────────────────────────────────────────────────────────────────
 
 def _parse_raw_csv(text: str) -> tuple[list[str], list[str], list[list[str]]]:
@@ -297,7 +297,7 @@ def _parse_salesbooking_csv(text: str, target_len: int) -> list[list[str]]:
         col 9 = 'Aktiv'     (Status – synthetisch)
         col 11= Übernachtungspreis (Reisepreis)
 
-    Nur Buchungen mit Anreise >= heute werden øbernommen, da der Journal-Export
+    Nur Buchungen mit Anreise >= heute werden übernommen, da der Journal-Export
     bereits alle abgerechneten (= vergangenen) Buchungen enthält.
     """
     reader = csv.reader(io.StringIO(text), delimiter=";")
@@ -405,6 +405,117 @@ def merge_csvs(journal_csv: str, salesbooking_results: dict[int, str]) -> str:
 
 
 # ──────────────────────────────────────────────────────────────────
+# Preislisten-Fetch
+# ──────────────────────────────────────────────────────────────────
+
+def _parse_accom(raw: str) -> dict:
+    """Parst 'NR - NAME/PARKING' aus einem Unterkunfts-Link-Text."""
+    raw = raw.strip()
+    parts = raw.split(' - ', 1)
+    if len(parts) == 2:
+        nr = parts[0].strip()
+        rest = parts[1]
+        # Sonderfall: Name enthält selbst '/' (z.B. "7/03-Düne 7")
+        # → wenn der Teil vor dem ersten '/' < 3 Zeichen ist, nimm zwei Segmente als Name
+        segs = rest.split('/')
+        if len(segs) >= 2 and len(segs[0].strip()) < 3:
+            name    = (segs[0] + '/' + segs[1]).strip()
+            parking = '/'.join(segs[2:]).strip()
+        elif len(segs) >= 2:
+            name    = segs[0].strip()
+            parking = '/'.join(segs[1:]).strip()
+        else:
+            name    = rest.strip()
+            parking = ''
+    else:
+        nr, name, parking = '', raw, ''
+    return {'nr': nr, 'name': name, 'parking': parking}
+
+
+def fetch_preisliste_data(session: requests.Session) -> dict | None:
+    """Holt alle Preislisten mit Saisonpreisen aus dem Contao-Backend."""
+    prices_url = f"{BASE_URL}/contao?do=fewo_prices"
+    print("📋  Lade Preislisten …")
+    try:
+        resp = session.get(prices_url, timeout=30)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"⚠️  Preislisten nicht abrufbar: {e}")
+        return None
+
+    html = resp.text
+
+    # Session-Token (rt) und ref aus erstem Preislisten-Link extrahieren
+    rt_m  = re.search(r'fewo_prices&(?:amp;)?table=tl_fewo_calendar_prices[^"\']*rt=([^&"\']+)', html)
+    ref_m = re.search(r'fewo_prices&(?:amp;)?table=tl_fewo_calendar_prices[^"\']*ref=([^&"\']+)', html)
+    rt  = rt_m.group(1)  if rt_m  else ''
+    ref = ref_m.group(1) if ref_m else ''
+
+    # Alle <tr> durchsuchen
+    price_lists = []
+    for tr_m in re.finditer(r'<tr[^>]*>(.*?)</tr>', html, re.DOTALL):
+        tr_html = tr_m.group(1)
+
+        # Nur Zeilen mit Preislisten-Link
+        pl_m = re.search(r'fewo_prices&(?:amp;)?table=tl_fewo_calendar_prices&(?:amp;)?id=(\d+)', tr_html)
+        if not pl_m:
+            continue
+        pl_id = pl_m.group(1)
+
+        # Name aus Link-Text
+        name_m = re.search(
+            r'fewo_prices&(?:amp;)?table=tl_fewo_calendar_prices&(?:amp;)?id=' + pl_id + r'[^"\']*"[^>]*>([^<]+)<',
+            tr_html
+        )
+        pl_name = name_m.group(1).strip() if name_m else f'Preisliste {pl_id}'
+
+        # Unterkünfte in dieser Zeile
+        accoms = [_parse_accom(m.group(1))
+                  for m in re.finditer(r'fewo_objects&(?:amp;)?act=edit[^"\']*"[^>]*>([^<]+)<', tr_html)]
+
+        price_lists.append({'id': pl_id, 'name': pl_name, 'accommodations': accoms, 'season_prices': {}})
+
+    if not price_lists:
+        print('⚠️  Keine Preislisten gefunden – Session abgelaufen?')
+        return None
+    print(f'✅  {len(price_lists)} Preislisten gefunden')
+
+    # Saisonpreise je Preisliste abrufen
+    current_year = str(datetime.today().year)
+    for pl in price_lists:
+        sub_url = (f"{BASE_URL}/contao?do=fewo_prices"
+                   f"&table=tl_fewo_calendar_prices"
+                   f"&id={pl['id']}&rt={rt}&ref={ref}")
+        try:
+            sub_resp = session.get(sub_url, timeout=30)
+            sub_html = sub_resp.text
+        except Exception as e:
+            print(f"  ⚠️  {pl['name']}: {e}")
+            continue
+
+        # Abschnitt für aktuelles Jahr finden
+        year_m = re.search(
+            r'fewo_toggler[^>]*>\s*' + re.escape(current_year) + r'\s*<.*?(?=fewo_toggler|$)',
+            sub_html, re.DOTALL
+        )
+        section = year_m.group(0) if year_m else sub_html
+
+        prices = {}
+        for pm in re.finditer(r'Saison\s+(.+?)\s+([\d.,]+)\s*€', section):
+            season = pm.group(1).strip()
+            try:
+                prices[season] = float(pm.group(2).replace('.', '').replace(',', '.'))
+            except ValueError:
+                pass
+        pl['season_prices'] = prices
+
+    total_prices = sum(len(pl['season_prices']) for pl in price_lists)
+    print(f'✅  Preislisten fertig – {total_prices} Saisonpreise gesamt')
+    return {'price_lists': price_lists, 'year': int(current_year),
+            'fetched_at': datetime.today().isoformat()}
+
+
+# ──────────────────────────────────────────────────────────────────
 # Hauptprogramm
 # ──────────────────────────────────────────────────────────────────
 
@@ -454,10 +565,19 @@ def main():
     if salesbooking_results:
         merged_csv = merge_csvs(journal_csv, salesbooking_results)
     else:
-        print("ℹ️  Kein Salesbooking verføgbar – nur Journal-Daten")
+        print("ℹ️  Kein Salesbooking verfügbar – nur Journal-Daten")
         merged_csv = journal_csv
 
-    # 5. Speichern
+    # 5. Preislisten abrufen und speichern
+    print("\n")
+    preisliste = fetch_preisliste_data(session)
+    if preisliste:
+        import json as _json
+        pl_path = Path(args.out).parent / "preisliste_data.json"
+        pl_path.write_text(_json.dumps(preisliste, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"💾  Preislisten gespeichert: {pl_path}")
+
+    # 6. Buchungs-CSV speichern
     out_path = Path(args.out)
     out_path.write_text(merged_csv, encoding="utf-8-sig")
     line_count = merged_csv.strip().count("\n")
