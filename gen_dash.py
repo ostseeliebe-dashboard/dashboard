@@ -1529,6 +1529,122 @@ def generate_html(data):
         </div>
     </div>'''
 
+    # -----------------------------------------------------------------------
+    # Preisliste Tab
+    # -----------------------------------------------------------------------
+    preisliste_data = data.get("preisliste")
+    if preisliste_data and preisliste_data.get("price_lists"):
+        pl_year = preisliste_data.get("year", "")
+        pl_lists = preisliste_data["price_lists"]
+
+        # Collect all unique season names across all price lists (preserve order)
+        all_seasons = []
+        seen_seasons = set()
+        for pl in pl_lists:
+            for s in pl.get("season_prices", {}):
+                if s not in seen_seasons:
+                    all_seasons.append(s)
+                    seen_seasons.add(s)
+
+        # Helper: derive price group label from list name
+        def _pg_label(name):
+            for stop in [" - ", " Haus", " Barth", " reduz", " spez"]:
+                idx = name.find(stop)
+                if idx > 0:
+                    return name[:idx].strip()
+            return name.strip()
+
+        # PG color map
+        PG_COLORS = {
+            "00": "#e8e8e8",
+            "PG 01": "#FFF2CC", "PG 02": "#FCE4D6", "PG 03": "#DDEBF7",
+            "PG 04": "#E2EFDA", "PG 05": "#F4CCCC", "PG 06": "#D9EAD3",
+            "PG 07": "#CFE2F3", "PG 08": "#FFF2CC", "PG 09": "#FCE4D6",
+            "PG 10": "#DDEBF7", "PG 10.2": "#E2EFDA", "PG 11": "#F4CCCC",
+            "PG 11.4": "#D9EAD3", "PG 12": "#CFE2F3", "PG 13": "#FFF2CC",
+            "PG 14": "#FCE4D6", "PG 15": "#DDEBF7", "PG 16": "#E2EFDA",
+            "PG 17.4": "#F4CCCC", "PG 18": "#D9EAD3", "PG 19": "#CFE2F3",
+            "PG 20": "#FFF2CC", "PG 21": "#FCE4D6",
+        }
+
+        # Build header
+        season_headers = "".join(f'<th class="num">{s}</th>' for s in all_seasons)
+        pl_header = f'''
+            <tr>
+                <th>Preisgruppe</th>
+                <th>Unterkunft</th>
+                {season_headers}
+            </tr>'''
+
+        # Build rows: one row per accommodation
+        pl_rows_html = []
+        for pl in pl_lists:
+            pg = _pg_label(pl["name"])
+            bg = PG_COLORS.get(pg, "#f9f9f9")
+            sp = pl.get("season_prices", {})
+            accoms = pl.get("accommodations", [])
+            if not accoms:
+                accoms = [{"nr": "", "name": pl["name"], "parking": ""}]
+
+            first = True
+            for ac in accoms:
+                ac_name = ac.get("name", "")
+                price_cells = "".join(
+                    '<td class="num">{}</td>'.format(
+                        f"{sp[s]:,.0f} \u20ac".replace(",", ".") if s in sp and sp[s] else "\u2013"
+                    )
+                    for s in all_seasons
+                )
+                pg_cell = (f'<td rowspan="{len(accoms)}" style="background:{bg};font-weight:600;'
+                           f'vertical-align:middle">{pg}</td>') if first else ""
+                pl_rows_html.append(
+                    f'<tr style="background:{bg if first else ""};">'
+                    f'{pg_cell}'
+                    f'<td>{ac_name}</td>'
+                    f'{price_cells}</tr>'
+                )
+                first = False
+
+        fetched = preisliste_data.get("fetched_at", "")[:10]
+        preisliste_tab_html = f'''
+    <div class="chart-container">
+        <h3>&#128203; Preislisten {pl_year}</h3>
+        <p style="color:#666;font-size:13px;margin-bottom:16px;">
+            Saisonpreise pro Nacht je Preisgruppe &mdash; Stand: {fetched} &mdash;
+            {len(pl_lists)} Preisgruppen, {sum(len(p.get("accommodations",[]) or [{}]) for p in pl_lists)} Unterk\u00fcnfte
+        </p>
+        <input type="text" id="plSearch" placeholder="Unterkunft oder Preisgruppe suchen\u2026"
+               oninput="filterPL(this.value)"
+               style="margin-bottom:14px;padding:8px 12px;border:1px solid #ddd;border-radius:6px;
+                      width:300px;font-size:14px;">
+        <div style="overflow-x:auto;">
+        <table class="prov-table" id="plTable">
+            <thead>{pl_header}</thead>
+            <tbody>
+                {"".join(pl_rows_html)}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    <script>
+    function filterPL(q) {{
+        q = q.toLowerCase();
+        const rows = document.querySelectorAll('#plTable tbody tr');
+        rows.forEach(r => {{
+            r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+        }});
+    }}
+    </script>'''
+    else:
+        preisliste_tab_html = '''
+    <div class="chart-container">
+        <h3>&#128203; Preislisten</h3>
+        <p style="color:#888;font-size:14px;">
+            Noch keine Preisdaten vorhanden. Die Daten werden beim n\u00e4chsten
+            Workflow-Lauf automatisch geladen.
+        </p>
+    </div>'''
+
     TABS = [
         ("uebersicht",        "\u00dcbersicht"),
         ("jahresvergleich",   "Jahresvergleich"),
@@ -1537,6 +1653,7 @@ def generate_html(data):
         ("zusatzkosten",      "Zusatzkosten"),
         ("provisionen",       "Provisionen"),
         ("umsatz_ranking",    "Umsatz-Ranking"),
+        ("preisliste",        "Preisliste"),
         ("apartmenthaeuser",  "Apartmenthaus"),
         ("unterkunft_detail", "Unterkunft Detail"),
     ]
@@ -1584,6 +1701,7 @@ def generate_html(data):
         ''' + prov_tab_html
         ),
         "umsatz_ranking": umsatz_ranking_html,
+        "preisliste": preisliste_tab_html,
         "apartmenthaeuser": apartmenthaus_tab_html,
         "unterkunft_detail": (
             '''<div class="chart-container">
@@ -2378,6 +2496,19 @@ def main():
     if len(sys.argv) > 3:
         stamm_path = sys.argv[3]
 
+    # Preislisten-JSON (optional, neben der CSV)
+    preisliste_path = os.path.join(os.path.dirname(os.path.abspath(csv_path)), "preisliste_data.json")
+    preisliste_data = None
+    if os.path.exists(preisliste_path):
+        try:
+            with open(preisliste_path, encoding="utf-8") as _pf:
+                preisliste_data = json.load(_pf)
+            print(f"  Preislisten geladen: {len(preisliste_data.get('price_lists', []))} Preisgruppen")
+        except Exception as _pe:
+            print(f"  ⚠️  Preislisten-JSON fehlerhaft: {_pe}")
+    else:
+        print(f"  ℹ️  Keine Preislisten-Datei ({preisliste_path})")
+
     print(f"Lese Buchungen aus: {csv_path}")
     bookings = read_bookings(csv_path)
     print(f"  {len(bookings)} Buchungen gelesen (Status=Buchung)")
@@ -2392,6 +2523,7 @@ def main():
 
     data = compute_data(bookings)
     data["stammdaten"] = stammdaten
+    data["preisliste"] = preisliste_data
     print(f"  Jahre: {data['years']}")
     for y in data["years"]:
         k = data["kpis"][y]
