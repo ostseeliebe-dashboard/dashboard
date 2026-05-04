@@ -1,0 +1,1321 @@
+{
+  "price_lists": [
+    {
+      "id": "163",
+      "name": "Preisliste 163",
+      "accommodations": [
+        {
+          "nr": "245",
+          "name": "Windflüchter F5",
+          "parking": "P F5 / 2512"
+        },
+        {
+          "nr": "143",
+          "name": "Kranichflug",
+          "parking": "P3-c/Büro"
+        },
+        {
+          "nr": "178",
+          "name": "Windwatt 4",
+          "parking": "P 4/2107"
+        },
+        {
+          "nr": "181",
+          "name": "Windflüchter 3",
+          "parking": "Tresor 3: 2907"
+        },
+        {
+          "nr": "169",
+          "name": "Sonnenuhr 6",
+          "parking": "Liftgarage 6/Büro"
+        },
+        {
+          "nr": "190",
+          "name": "Cozy 1",
+          "parking": "Sünnenk/Nuki"
+        },
+        {
+          "nr": "191",
+          "name": "Cozy 2",
+          "parking": "Sünnenk/Nuki"
+        },
+        {
+          "nr": "275",
+          "name": "kl. Hafen No 3",
+          "parking": "2412"
+        },
+        {
+          "nr": "172",
+          "name": "Strandnest",
+          "parking": "P 1/Büro"
+        },
+        {
+          "nr": "276",
+          "name": "Ankerzeit H7",
+          "parking": "2712"
+        },
+        {
+          "nr": "238",
+          "name": "Meerzeit D6",
+          "parking": "2612"
+        },
+        {
+          "nr": "109",
+          "name": "Inselperle",
+          "parking": "P1/1109"
+        },
+        {
+          "nr": "130",
+          "name": "Strandperle",
+          "parking": "P 20/Büro"
+        },
+        {
+          "nr": "282",
+          "name": "In den Wiesen App. 2",
+          "parking": "App 2: 2612"
+        },
+        {
+          "nr": "278",
+          "name": "Santa Karina Born",
+          "parking": "0336"
+        },
+        {
+          "nr": "77",
+          "name": "Velo 1",
+          "parking": "Büro"
+        },
+        {
+          "nr": "78",
+          "name": "Velo 2",
+          "parking": "Büro"
+        },
+        {
+          "nr": "79",
+          "name": "Velo 3",
+          "parking": "Büro"
+        },
+        {
+          "nr": "138",
+          "name": "Velo 4",
+          "parking": "Büro"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "198",
+      "name": "Preisliste 198",
+      "accommodations": [
+        {
+          "nr": "135",
+          "name": "Lütten Pohnert",
+          "parking": "Büro"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "117",
+      "name": "Preisliste 117",
+      "accommodations": [
+        {
+          "nr": "219",
+          "name": "Buchentraum",
+          "parking": "P 1/4/ 0903"
+        },
+        {
+          "nr": "261",
+          "name": "OSS rechts",
+          "parking": "2312"
+        },
+        {
+          "nr": "262",
+          "name": "WSL links",
+          "parking": "2112"
+        },
+        {
+          "nr": "260",
+          "name": "DWR Mitte",
+          "parking": "2212"
+        },
+        {
+          "nr": "150",
+          "name": "Seeluft 8",
+          "parking": "P 8/Büro"
+        },
+        {
+          "nr": "271",
+          "name": "Bernstein",
+          "parking": "2306"
+        },
+        {
+          "nr": "229",
+          "name": "Ostseeauszeit",
+          "parking": "0903"
+        },
+        {
+          "nr": "153",
+          "name": "Residenz 123",
+          "parking": "T 23/Büro"
+        },
+        {
+          "nr": "156",
+          "name": "Residenz 238",
+          "parking": "T 38/Büro"
+        },
+        {
+          "nr": "155",
+          "name": "Residenz 232",
+          "parking": "T 32/Büro"
+        },
+        {
+          "nr": "157",
+          "name": "Residenz 242",
+          "parking": "T 42/Büro"
+        },
+        {
+          "nr": "152",
+          "name": "Residenz 120",
+          "parking": "T 20/ Büro"
+        },
+        {
+          "nr": "159",
+          "name": "Residenz 352",
+          "parking": "A 52/ Büro"
+        },
+        {
+          "nr": "161",
+          "name": "Residenz 567",
+          "parking": "A 67/Büro"
+        },
+        {
+          "nr": "162",
+          "name": "Residenz 677",
+          "parking": "A 77/Büro"
+        },
+        {
+          "nr": "173",
+          "name": "Traummomente",
+          "parking": "P 31/Büro"
+        },
+        {
+          "nr": "163",
+          "name": "Rosenblüte",
+          "parking": "P 2.4/0903"
+        },
+        {
+          "nr": "179",
+          "name": "Windflüchter 1",
+          "parking": "Tresor 1: 2107"
+        },
+        {
+          "nr": "180",
+          "name": "Windflüchter 2",
+          "parking": "Tresor 2: 0903"
+        },
+        {
+          "nr": "192",
+          "name": "Cozy 3",
+          "parking": "Sünnenk./Nuki"
+        },
+        {
+          "nr": "177",
+          "name": "Windwatt 2",
+          "parking": "P 2/0203"
+        },
+        {
+          "nr": "126",
+          "name": "Boddenliebe",
+          "parking": "links letzter P/Büro"
+        },
+        {
+          "nr": "263",
+          "name": "Wiesengrund Haus 5",
+          "parking": "P 5/ 0903"
+        },
+        {
+          "nr": "137",
+          "name": "Frau Zander",
+          "parking": "Nr. 4/ Büro"
+        },
+        {
+          "nr": "227",
+          "name": "In den Wiesen 3",
+          "parking": "App 3: 1812"
+        },
+        {
+          "nr": "268",
+          "name": "Öresundhus Whg.3",
+          "parking": "0303"
+        },
+        {
+          "nr": "201",
+          "name": "Alter Schwede 1",
+          "parking": "9871"
+        },
+        {
+          "nr": "202",
+          "name": "Alter Schwede 2",
+          "parking": "8792"
+        },
+        {
+          "nr": "203",
+          "name": "Alter Schwede 3",
+          "parking": "2973"
+        },
+        {
+          "nr": "71",
+          "name": "7/05-Düne 7",
+          "parking": "P Whg. 5/Büro"
+        },
+        {
+          "nr": "75",
+          "name": "7A/05-Düne 7",
+          "parking": "P Whg. 9/Büro"
+        },
+        {
+          "nr": "94",
+          "name": "Sandbank No. 4",
+          "parking": "6204"
+        },
+        {
+          "nr": "91",
+          "name": "Strandsegler Whg. 5",
+          "parking": "6205"
+        },
+        {
+          "nr": "90",
+          "name": "Dünenläufer Whg. 6",
+          "parking": "6206"
+        },
+        {
+          "nr": "160",
+          "name": "Lütte Auszeit",
+          "parking": "Büro"
+        },
+        {
+          "nr": "120",
+          "name": "RC - Meeresrauschen Whg. 5",
+          "parking": "Buero"
+        },
+        {
+          "nr": "265",
+          "name": "Dat Lütte Glück",
+          "parking": "2525"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "98",
+      "name": "Preisliste 98",
+      "accommodations": [
+        {
+          "nr": "233",
+          "name": "Sterntaucher 3",
+          "parking": "P 3 / WG 3: 2613"
+        },
+        {
+          "nr": "231",
+          "name": "Sterntaucher 1",
+          "parking": "P 1 / WG 1: 2411"
+        },
+        {
+          "nr": "232",
+          "name": "Sterntaucher 2",
+          "parking": "P 2 / WG 2: 2512"
+        },
+        {
+          "nr": "234",
+          "name": "Sterntaucher 4",
+          "parking": "P Seaside/ WG 4: 2714"
+        },
+        {
+          "nr": "141",
+          "name": "FW Koje 13",
+          "parking": "P 13/ 1324"
+        },
+        {
+          "nr": "230",
+          "name": "Ostseehygge",
+          "parking": "P 26/ 2107"
+        },
+        {
+          "nr": "151",
+          "name": "Residenz 114",
+          "parking": "T 14/Büro"
+        },
+        {
+          "nr": "236",
+          "name": "Sterntaucher 6",
+          "parking": "P 6 /WG 6: 2916"
+        },
+        {
+          "nr": "182",
+          "name": "Windflüchter EG",
+          "parking": "Tresor 4: 1812"
+        },
+        {
+          "nr": "246",
+          "name": "Tordalk 3",
+          "parking": "P 3/ 2613"
+        },
+        {
+          "nr": "127",
+          "name": "Brise",
+          "parking": "P 56/5603"
+        },
+        {
+          "nr": "239",
+          "name": "Tordalk 5",
+          "parking": "P JuNics/ hinten am Schuppen von der Whg. 2815"
+        },
+        {
+          "nr": "237",
+          "name": "Tordalk 1",
+          "parking": "P 1/ WG 1: 2411"
+        },
+        {
+          "nr": "132",
+          "name": "Cozy 5",
+          "parking": "P links vom Haus / am Schuppen Nr. 5 1812"
+        },
+        {
+          "nr": "142",
+          "name": "Kormoran19",
+          "parking": "P 19/1924"
+        },
+        {
+          "nr": "226",
+          "name": "Hafenkoje  Unterdeck",
+          "parking": "0903"
+        },
+        {
+          "nr": "221",
+          "name": "Bi de Wisch EG",
+          "parking": "EG: 2612"
+        },
+        {
+          "nr": "222",
+          "name": "Bi de Wisch OG",
+          "parking": "OG 1812"
+        },
+        {
+          "nr": "165",
+          "name": "Seeluft 4",
+          "parking": "P 4/0903"
+        },
+        {
+          "nr": "277",
+          "name": "Strandläufer Born",
+          "parking": "9303"
+        },
+        {
+          "nr": "274",
+          "name": "kl. Hafen No 2",
+          "parking": "2019"
+        },
+        {
+          "nr": "183",
+          "name": "Zeesen Kate",
+          "parking": "P 17/4 / 0317"
+        },
+        {
+          "nr": "281",
+          "name": "Moin Moin",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "166",
+          "name": "Seewind",
+          "parking": "P 6/Büro"
+        },
+        {
+          "nr": "267",
+          "name": "Öresundhus Whg.2",
+          "parking": "0203"
+        },
+        {
+          "nr": "188",
+          "name": "Sonnenschein",
+          "parking": "2404"
+        },
+        {
+          "nr": "189",
+          "name": "Mondzauber",
+          "parking": "1812"
+        },
+        {
+          "nr": "194",
+          "name": "Möwennest Nr. 5",
+          "parking": "P 5 / Büro"
+        },
+        {
+          "nr": "70",
+          "name": "7/03-Düne 7",
+          "parking": "P Whg. 3/Büro"
+        },
+        {
+          "nr": "72",
+          "name": "7/06-Düne 7",
+          "parking": "P Whg. 6/Büro"
+        },
+        {
+          "nr": "73",
+          "name": "7A/02-Düne 7",
+          "parking": "P Whg. 7/Büro"
+        },
+        {
+          "nr": "74",
+          "name": "7A/04-Düne 7",
+          "parking": "P Whg. 8/Büro"
+        },
+        {
+          "nr": "76",
+          "name": "7A/06",
+          "parking": "Düne 7/P Whg. 10/Büro"
+        },
+        {
+          "nr": "96",
+          "name": "Reetzeit 2",
+          "parking": "3311"
+        },
+        {
+          "nr": "92",
+          "name": "Ostseekoje",
+          "parking": "P 2/ 6202"
+        },
+        {
+          "nr": "136",
+          "name": "uns Leef, HS 12a",
+          "parking": "Whg.1/ 1136"
+        },
+        {
+          "nr": "286",
+          "name": "Seestern",
+          "parking": "P Seestern/ 1812"
+        },
+        {
+          "nr": "211",
+          "name": "Küstenkajüte Whg.1",
+          "parking": "Büro"
+        },
+        {
+          "nr": "212",
+          "name": "Küstenkajüte Whg.2",
+          "parking": "Büro"
+        },
+        {
+          "nr": "214",
+          "name": "Küstenkajüte Whg.7",
+          "parking": "Büro"
+        },
+        {
+          "nr": "84",
+          "name": "Störtebekerkoje 12",
+          "parking": "4 /1184"
+        },
+        {
+          "nr": "83",
+          "name": "Störtebekerkoje 12",
+          "parking": "1 /8181"
+        },
+        {
+          "nr": "87",
+          "name": "Störtebekerkoje 12a",
+          "parking": "4 /1487"
+        },
+        {
+          "nr": "85",
+          "name": "Störtebekerkoje 12",
+          "parking": "5 /1285"
+        },
+        {
+          "nr": "86",
+          "name": "Störtebekerkoje 12",
+          "parking": "6 /1386"
+        },
+        {
+          "nr": "88",
+          "name": "Störtebekerkoje 12a",
+          "parking": "6 /1588"
+        },
+        {
+          "nr": "89",
+          "name": "Schatzkiste 12",
+          "parking": "2 / 1589"
+        },
+        {
+          "nr": "81",
+          "name": "Wellnessresidenz Zingst Whg. 5",
+          "parking": "TG5 / Büro"
+        },
+        {
+          "nr": "82",
+          "name": "Küstenzauber 12a",
+          "parking": "Whg. 3/ 1582"
+        },
+        {
+          "nr": "102",
+          "name": "Ostseeresidenz- Ostseeblick Whg.15",
+          "parking": "0115"
+        },
+        {
+          "nr": "288",
+          "name": "RC - Meerle 1",
+          "parking": "2907"
+        },
+        {
+          "nr": "291",
+          "name": "RC - Meerle 2",
+          "parking": "1211"
+        },
+        {
+          "nr": "296",
+          "name": "RC - Meerle 3",
+          "parking": "1609"
+        },
+        {
+          "nr": "297",
+          "name": "RC - Meerle 4",
+          "parking": "0603"
+        },
+        {
+          "nr": "299",
+          "name": "RC - Meerle 5",
+          "parking": "1602"
+        },
+        {
+          "nr": "210",
+          "name": "Kajüte 4",
+          "parking": "vor dem Haus/ 2704"
+        },
+        {
+          "nr": "154",
+          "name": "Stranddistel",
+          "parking": "P4/ 1506"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "197",
+      "name": "Preisliste 197",
+      "accommodations": [],
+      "season_prices": {}
+    },
+    {
+      "id": "177",
+      "name": "Preisliste 177",
+      "accommodations": [
+        {
+          "nr": "248",
+          "name": "Sonnenzauber",
+          "parking": "1609"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "119",
+      "name": "Preisliste 119",
+      "accommodations": [
+        {
+          "nr": "100",
+          "name": "Seeluft 3",
+          "parking": "P 3/Büro"
+        },
+        {
+          "nr": "131",
+          "name": "Cozy 4",
+          "parking": "P vor dem Haus / am Schuppen Tresor Nr. 4 / 2107"
+        },
+        {
+          "nr": "176",
+          "name": "Wellenklang",
+          "parking": "P 3/0903"
+        },
+        {
+          "nr": "273",
+          "name": "kl. Hafen No 1",
+          "parking": "1111"
+        },
+        {
+          "nr": "107",
+          "name": "Sandnelke",
+          "parking": "P10/Büro"
+        },
+        {
+          "nr": "213",
+          "name": "Küstenkajüte Whg.5",
+          "parking": "Büro"
+        },
+        {
+          "nr": "287",
+          "name": "Seeluft",
+          "parking": "P Seeluft/1813"
+        },
+        {
+          "nr": "293",
+          "name": "Kraanstiet 1",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "294",
+          "name": "Kraanstiet 2",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "103",
+          "name": "Zum Kranich Whg 5",
+          "parking": "2105"
+        },
+        {
+          "nr": "",
+          "name": "257-Ferienglück /0815",
+          "parking": ""
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "104",
+      "name": "Preisliste 104",
+      "accommodations": [
+        {
+          "nr": "185",
+          "name": "54 Grad",
+          "parking": "3C/ 0903"
+        },
+        {
+          "nr": "116",
+          "name": "Reethus Natalie",
+          "parking": "0903"
+        },
+        {
+          "nr": "140",
+          "name": "Kleine Lagune",
+          "parking": "P 7/Büro"
+        },
+        {
+          "nr": "175",
+          "name": "Wellenflüstern",
+          "parking": "P 1.1/0903"
+        },
+        {
+          "nr": "171",
+          "name": "Strandglück",
+          "parking": "P 1.4/0425"
+        },
+        {
+          "nr": "186",
+          "name": "Käptn ADI",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "149",
+          "name": "Mondmuschel",
+          "parking": "P 2.3/ oben 2107"
+        },
+        {
+          "nr": "147",
+          "name": "Künstlerkate",
+          "parking": "P2.2/2907"
+        },
+        {
+          "nr": "235",
+          "name": "Sterntaucher 5",
+          "parking": "P 5 / WG 5: 2815"
+        },
+        {
+          "nr": "241",
+          "name": "Tordalk 7",
+          "parking": "P Seaside 2/ WG 7: 3017"
+        },
+        {
+          "nr": "240",
+          "name": "Tordalk 6",
+          "parking": "P 6/ WG 6: 2916"
+        },
+        {
+          "nr": "224",
+          "name": "Fräulein Sidi",
+          "parking": "P 1/0103"
+        },
+        {
+          "nr": "119",
+          "name": "Seensucht",
+          "parking": "0903"
+        },
+        {
+          "nr": "167",
+          "name": "Silbermöwe",
+          "parking": "P 14/0607"
+        },
+        {
+          "nr": "200",
+          "name": "Krabbenhus",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "118",
+          "name": "Inselleben",
+          "parking": "0903"
+        },
+        {
+          "nr": "128",
+          "name": "Sonnenglebbe 38a",
+          "parking": "1903"
+        },
+        {
+          "nr": "124",
+          "name": "Glücksfinder",
+          "parking": "0904"
+        },
+        {
+          "nr": "174",
+          "name": "Elli",
+          "parking": "P6 / Büro"
+        },
+        {
+          "nr": "170",
+          "name": "Ankerplatz 32",
+          "parking": "2211"
+        },
+        {
+          "nr": "97",
+          "name": "Stralsund",
+          "parking": "7800"
+        },
+        {
+          "nr": "98",
+          "name": "Bremen",
+          "parking": "7801"
+        },
+        {
+          "nr": "295",
+          "name": "Kraanstiet 3",
+          "parking": "Nuki"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "213",
+      "name": "Preisliste 213",
+      "accommodations": [
+        {
+          "nr": "105",
+          "name": "Friederike",
+          "parking": "1509"
+        },
+        {
+          "nr": "134",
+          "name": "Wismar",
+          "parking": "0900"
+        },
+        {
+          "nr": "93",
+          "name": "StrandAnker",
+          "parking": "0524"
+        },
+        {
+          "nr": "133",
+          "name": "Steuerbord",
+          "parking": "3006"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "175",
+      "name": "Preisliste 175",
+      "accommodations": [
+        {
+          "nr": "243",
+          "name": "Tordalk 10",
+          "parking": "P 10/ WG 10: 3110"
+        },
+        {
+          "nr": "284",
+          "name": "Sonnenbirke",
+          "parking": "1607"
+        },
+        {
+          "nr": "145",
+          "name": "Bärbel",
+          "parking": "1303"
+        },
+        {
+          "nr": "146",
+          "name": "Haus am Strand",
+          "parking": "2411"
+        },
+        {
+          "nr": "285",
+          "name": "Haus Sonnenschein",
+          "parking": "1515"
+        },
+        {
+          "nr": "57",
+          "name": "RC - Therese",
+          "parking": "Büro"
+        },
+        {
+          "nr": "56",
+          "name": "RC - Charlotte",
+          "parking": "Büro"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "176",
+      "name": "Preisliste 176",
+      "accommodations": [
+        {
+          "nr": "242",
+          "name": "Tordalk 9",
+          "parking": "P 9/ WG 9: 3009"
+        },
+        {
+          "nr": "204",
+          "name": "Luv",
+          "parking": "1602"
+        },
+        {
+          "nr": "283",
+          "name": "Boddenblick 9",
+          "parking": "4411"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "157",
+      "name": "Preisliste 157",
+      "accommodations": [
+        {
+          "nr": "196",
+          "name": "Windspiel",
+          "parking": "3311"
+        },
+        {
+          "nr": "198",
+          "name": "Wellenbrecher",
+          "parking": "4411"
+        },
+        {
+          "nr": "197",
+          "name": "Passatwind",
+          "parking": "2211"
+        },
+        {
+          "nr": "195",
+          "name": "Windland",
+          "parking": "5511"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "162",
+      "name": "Preisliste 162",
+      "accommodations": [
+        {
+          "nr": "117",
+          "name": "Seegras",
+          "parking": "0903"
+        },
+        {
+          "nr": "269",
+          "name": "Ruheoase",
+          "parking": "1301"
+        },
+        {
+          "nr": "270",
+          "name": "Wellnessoase",
+          "parking": "1302"
+        },
+        {
+          "nr": "101",
+          "name": "Strandwild",
+          "parking": "0924"
+        },
+        {
+          "nr": "168",
+          "name": "Lust auf Meer",
+          "parking": "0228"
+        },
+        {
+          "nr": "184",
+          "name": "Kleine Auszeit",
+          "parking": "0902"
+        },
+        {
+          "nr": "300",
+          "name": "Meereszauber",
+          "parking": "2882"
+        },
+        {
+          "nr": "217",
+          "name": "Kinnekulle 1",
+          "parking": "Büro"
+        },
+        {
+          "nr": "216",
+          "name": "Meeresrauschen 2",
+          "parking": "Büro"
+        },
+        {
+          "nr": "207",
+          "name": "Zingstrose",
+          "parking": "2772"
+        },
+        {
+          "nr": "259- RC",
+          "name": "Strandhafer",
+          "parking": "1930"
+        },
+        {
+          "nr": "258-RC",
+          "name": "Strandkaten",
+          "parking": "1927"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "114",
+      "name": "Preisliste 114",
+      "accommodations": [
+        {
+          "nr": "129",
+          "name": "DAT KROEGER HUS",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "114",
+          "name": "Ocean Star",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "121",
+          "name": "Meeresstern",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "122",
+          "name": "Wildrose",
+          "parking": "0903"
+        },
+        {
+          "nr": "139",
+          "name": "Kranschehus",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "280",
+          "name": "Bültenzeit",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "99",
+          "name": "Rewal",
+          "parking": "2211"
+        },
+        {
+          "nr": "144",
+          "name": "Lotta",
+          "parking": "1305"
+        },
+        {
+          "nr": "95",
+          "name": "Reetzeit 1",
+          "parking": "2211"
+        },
+        {
+          "nr": "228",
+          "name": "Clownfisch",
+          "parking": "P vor der Tür/ 3909"
+        },
+        {
+          "nr": "247",
+          "name": "Sonnendeck",
+          "parking": "P vor der Tür/ 3808"
+        },
+        {
+          "nr": "148",
+          "name": "Schifferkaten",
+          "parking": "2801"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "191",
+      "name": "Preisliste 191",
+      "accommodations": [
+        {
+          "nr": "289",
+          "name": "Witzki",
+          "parking": "2508"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "111",
+      "name": "Preisliste 111",
+      "accommodations": [
+        {
+          "nr": "113",
+          "name": "Sonneninsel",
+          "parking": "P 11/ NUKI"
+        },
+        {
+          "nr": "106",
+          "name": "Seelust",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "111",
+          "name": "Lütte Hanna",
+          "parking": "3003"
+        },
+        {
+          "nr": "112",
+          "name": "Lütte Marie",
+          "parking": "1707"
+        },
+        {
+          "nr": "164",
+          "name": "Kleiner Seehund",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "125",
+          "name": "Beach Loft",
+          "parking": "P 18/Büro"
+        },
+        {
+          "nr": "193",
+          "name": "Gotland",
+          "parking": "Nuki"
+        },
+        {
+          "nr": "108",
+          "name": "Kranichrast",
+          "parking": "0903"
+        },
+        {
+          "nr": "123",
+          "name": "Zeeskahn",
+          "parking": "2107"
+        },
+        {
+          "nr": "115",
+          "name": "Strandhaus Zingst",
+          "parking": "1812"
+        },
+        {
+          "nr": "158",
+          "name": "Meeresbrise",
+          "parking": "P am Haus/ 2211"
+        },
+        {
+          "nr": "279",
+          "name": "Darss-Duett 1",
+          "parking": "1811"
+        },
+        {
+          "nr": "290",
+          "name": "Darss-Duett 2",
+          "parking": "1812"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "101",
+      "name": "Preisliste 101",
+      "accommodations": [
+        {
+          "nr": "218",
+          "name": "Traumzeit 1",
+          "parking": "NUKI"
+        },
+        {
+          "nr": "256",
+          "name": "Traumzeit 2",
+          "parking": "NUKI"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "140",
+      "name": "Preisliste 140",
+      "accommodations": [
+        {
+          "nr": "110",
+          "name": "Hus oevern diek",
+          "parking": "0903"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "199",
+      "name": "Preisliste 199",
+      "accommodations": [
+        {
+          "nr": "200",
+          "name": "Gracieuse Whg. 4",
+          "parking": "P 14/ Büro"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "220",
+      "name": "Preisliste 220",
+      "accommodations": [
+        {
+          "nr": "30",
+          "name": "App. 0.2",
+          "parking": "P02/3402"
+        },
+        {
+          "nr": "31",
+          "name": "App. 0.3",
+          "parking": "P03/3103"
+        },
+        {
+          "nr": "45",
+          "name": "App. 5.10",
+          "parking": "P5.10/1005"
+        },
+        {
+          "nr": "49",
+          "name": "App. 5.11",
+          "parking": "P5.11/2549"
+        },
+        {
+          "nr": "37",
+          "name": "App. 3.11",
+          "parking": "P3.11/6211"
+        },
+        {
+          "nr": "39",
+          "name": "App. 4.10",
+          "parking": "P4.10/3914"
+        },
+        {
+          "nr": "40",
+          "name": "App. 4.11",
+          "parking": "P4.11 / 6240"
+        },
+        {
+          "nr": "44",
+          "name": "App. 5.9",
+          "parking": "P5.9/ 2644"
+        },
+        {
+          "nr": "29",
+          "name": "App. 1.5",
+          "parking": "P1.5/ 1329"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "221",
+      "name": "Preisliste 221",
+      "accommodations": [
+        {
+          "nr": "42",
+          "name": "App. 4.6",
+          "parking": "P4.6/ 1842"
+        },
+        {
+          "nr": "41",
+          "name": "App. 4.7",
+          "parking": "P4.7/ 8141"
+        },
+        {
+          "nr": "43",
+          "name": "App. 5.6",
+          "parking": "P5.6/0560"
+        },
+        {
+          "nr": "36",
+          "name": "App. 3.7",
+          "parking": "P3.7/ 2436"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "222",
+      "name": "Preisliste 222",
+      "accommodations": [
+        {
+          "nr": "38",
+          "name": "App. 3.1",
+          "parking": "P3.1/6201"
+        },
+        {
+          "nr": "32",
+          "name": "App. 2.1",
+          "parking": "P2.1/ 1732"
+        },
+        {
+          "nr": "33",
+          "name": "App. 2.2",
+          "parking": "P2.2/ 1933"
+        },
+        {
+          "nr": "34",
+          "name": "App. 3.3",
+          "parking": "P3.3/4334"
+        },
+        {
+          "nr": "35",
+          "name": "App. 3.4",
+          "parking": "P3.4/1004"
+        },
+        {
+          "nr": "47",
+          "name": "App. 4.4",
+          "parking": "P4.4/ 1247"
+        },
+        {
+          "nr": "48",
+          "name": "App. 2.3",
+          "parking": "P2.3/ 7148"
+        }
+      ],
+      "season_prices": {}
+    },
+    {
+      "id": "223",
+      "name": "Preisliste 223",
+      "accommodations": [
+        {
+          "nr": "46",
+          "name": "App. 6.1",
+          "parking": "P6.1/4616"
+        },
+        {
+          "nr": "50",
+          "name": "App. 7.1",
+          "parking": "P7.1/ 0159"
+        }
+      ],
+      "season_prices": {}
+    }
+  ],
+  "year": 2026,
+  "fetched_at": "2026-05-04T13:25:04.820598"
+}
