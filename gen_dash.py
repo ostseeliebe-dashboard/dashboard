@@ -1835,14 +1835,35 @@ def generate_html(data):
         pl_year = preisliste_data.get("year", "")
         pl_lists = preisliste_data["price_lists"]
 
-        # Collect all unique season names across all price lists (preserve order)
-        all_seasons = []
+        # Chronologische Reihenfolge der Saisonzeiten (Januar → Dezember)
+        SEASON_ORDER = [
+            "Winter",
+            "Frühling I",
+            "Ostern",
+            "Frühling II",
+            "Frühsommer",
+            "Strandzeit I",
+            "Strandzeit II",
+            "Kranichzeit",
+            "Spätherbst",
+            "Weihnachten",
+            "Silvester - Neujahr",
+        ]
+
+        # Collect all unique season names across all price lists
         seen_seasons = set()
         for pl in pl_lists:
             for s in pl.get("season_prices", {}):
-                if s not in seen_seasons:
-                    all_seasons.append(s)
-                    seen_seasons.add(s)
+                seen_seasons.add(s)
+
+        # Sortierung: bekannte Saisons nach SEASON_ORDER, unbekannte alphabetisch ans Ende
+        def _season_sort_key(s):
+            try:
+                return (0, SEASON_ORDER.index(s))
+            except ValueError:
+                return (1, s)
+
+        all_seasons = sorted(seen_seasons, key=_season_sort_key)
 
         # Helper: derive price group label from list name
         def _pg_label(name):
