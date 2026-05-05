@@ -294,6 +294,48 @@ def read_bookings(csv_path):
                 "zusatzkosten": zusatz,
                 "profiles": profiles,
             })
+
+    # --- Normalisierung: Unterkunftsnamen mit Ersetzungszeichen (U+FFFD) beheben ---
+    # Manche CSV-Zeilen enthalten U+FFFD statt Umlaute (Encoding-Fehler im Export).
+    # Wenn der korrekte Name (ohne U+FFFD) ebenfalls im CSV vorkommt, verwenden wir
+    # diesen als Normalisierungsziel. Für Namen ohne saubere Entsprechung gibt es
+    # eine Fallback-Korrekturtabelle.
+    _REPL = '�'
+    _HARDCODED = {
+        'Dat L�tte Gl�ck': 'Dat Lütte Glück',
+        'Feriengl�ck':          'Ferienglück',
+        'Kaj�te 4':             'Kajüte 4',
+        'M�wennest':            'Möwennest',
+    }
+    _all_names = set(b["unterkunft"] for b in bookings)
+    _clean_names = {n for n in _all_names if _REPL not in n}
+    _broken_names = {n for n in _all_names if _REPL in n}
+    _norm_map = {}
+    for _broken in _broken_names:
+        # Hardcoded fallback first
+        if _broken in _HARDCODED:
+            _norm_map[_broken] = _HARDCODED[_broken]
+            continue
+        _parts = [p for p in _broken.split(_REPL) if p]
+        _candidates = [c for c in _clean_names if all(p in c for p in _parts)]
+        # Exclude ZZZ-Archiv entries unless the broken name itself starts with ZZZ
+        if not _broken.startswith('ZZZ'):
+            _candidates = [c for c in _candidates if not c.startswith('ZZZ')]
+        if len(_candidates) == 1:
+            _norm_map[_broken] = _candidates[0]
+        elif _candidates:
+            _norm_map[_broken] = min(_candidates, key=lambda c: abs(len(c) - len(_broken)))
+    if _norm_map:
+        for b in bookings:
+            if _REPL in b["unterkunft"] and b["unterkunft"] in _norm_map:
+                _clean = _norm_map[b["unterkunft"]]
+                b["unterkunft"] = _clean
+                # Ort aus der sauberen Buchung übernehmen, falls leer
+                if not b["ort"]:
+                    _clean_ort = next((x["ort"] for x in bookings
+                                       if x["unterkunft"] == _clean and x["ort"]), "")
+                    b["ort"] = _clean_ort
+
     return bookings
 
 
@@ -3042,8 +3084,12 @@ def main():
         # Skip properties with no bookings
         if all(pdata["years"].get(y, {}).get("buchungen", 0) == 0 for y in years):
             continue
-        # Safe filename
-        safe_name = prop_name.replace("/", "-").replace("\\", "-").replace(" ", "_")
+        # Safe filename (umlauts → ASCII, then strip special chars)
+        _uml = {"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue", "ß": "ss"}
+        _sn = prop_name
+        for _u, _a in _uml.items():
+            _sn = _sn.replace(_u, _a)
+        safe_name = _sn.replace("/", "-").replace("\\", "-").replace(" ", "_")
         safe_name = "".join(c for c in safe_name if c.isalnum() or c in "-_").strip("_")
         if not safe_name:
             safe_name = f"unterkunft_{count}"

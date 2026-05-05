@@ -34,7 +34,7 @@
 <body>
     <div class="header">
         <h1>Darßwaldradler</h1>
-        <div class="sub">Wieck a. Darß — Umsatzübersicht — Stand 05.05.2026 13:57</div>
+        <div class="sub">Wieck a. Darß — Umsatzübersicht — Stand 05.05.2026 15:04</div>
     </div>
     <div class="container">
         <div class="chart-section">
@@ -242,15 +242,40 @@
                 </div>
             </div>
         </div>
+        <div class="section">
+            <h2>2026</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><div class="kl">Buchungen</div><div class="kv">5</div></div>
+                <div class="kpi"><div class="kl">Nächte</div><div class="kv">41</div></div>
+                <div class="kpi"><div class="kl">Reisepreis</div><div class="kv">5.599,00 €</div></div>
+                <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">0,00 €</div></div>
+                <div class="kpi"><div class="kl">Miete Eigentümer</div><div class="kv green">0,00 €</div></div>
+                <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">0,00 €</div></div>
+                <div class="kpi"><div class="kl">Prov.satz (Vertrag)</div><div class="kv" style="color:#0066cc;">17%</div></div>
+                <div class="kpi"><div class="kl">Ø Preis/Nacht</div><div class="kv">136,56 €</div></div>
+                <div class="kpi"><div class="kl">Ø Aufenthalt</div><div class="kv">8,2 N.</div></div>
+                <div class="kpi"><div class="kl">Auslastung</div><div class="kv">11,2 %</div></div>
+            </div>
+            <div class="two-col">
+                <div>
+                    <h3>Vertriebskanäle</h3>
+                    <table><thead><tr><th>Kanal</th><th class="num">Buchungen</th></tr></thead><tbody><tr><td>(leer)</td><td class="num">5</td></tr></tbody></table>
+                </div>
+                <div>
+                    <h3>Zusatzkosten</h3>
+                    <p style='color:#aaa;'>Keine Zusatzkosten</p>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
         new Chart(document.getElementById('yearChart'), {
             type: 'bar',
             data: {
-                labels: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
+                labels: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
                 datasets: [
-                    { label: 'Reisepreis', data: [7904.0, 7909.31, 17109.54, 15876.33, 16253.53, 13095.93, 15335.56, 17562.29], backgroundColor: '#0066cc', borderRadius: 4 },
-                    { label: 'Miete Eigentümer', data: [0.0, 0.0, 10914.44, 9365.07, 9048.81, 6669.25, 9100.94, 9636.22], backgroundColor: '#00aaaa', borderRadius: 4 }
+                    { label: 'Reisepreis', data: [7904.0, 7909.31, 17109.54, 15876.33, 16253.53, 13095.93, 15335.56, 17562.29, 5599.0], backgroundColor: '#0066cc', borderRadius: 4 },
+                    { label: 'Miete Eigentümer', data: [0.0, 0.0, 10914.44, 9365.07, 9048.81, 6669.25, 9100.94, 9636.22, 0.0], backgroundColor: '#00aaaa', borderRadius: 4 }
                 ]
             },
             options: {
