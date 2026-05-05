@@ -855,6 +855,73 @@ def _build_orte_tab(orte, years, current_year):
     </div>'''
 
 
+def _build_auslastungsampel(property_data, current_year):
+    """Auslastungsampel: Übersicht aller Objekte mit Ampelfarbe für aktuelles Jahr."""
+    rows = []
+    for pname, pdata in sorted(property_data.items()):
+        yd = pdata["years"].get(current_year)
+        if not yd or yd["buchungen"] == 0:
+            continue
+        pct = yd["belegung_pct"]
+        if pct >= 60:
+            ampel = "🟢"; color = "#2d7a2d"
+        elif pct >= 35:
+            ampel = "🟡"; color = "#e67e00"
+        else:
+            ampel = "🔴"; color = "#cc3333"
+        ort = pdata.get("ort", "")
+        rows.append((pct, pname, ort, ampel, color, yd["buchungen"], yd["reisepreis"]))
+
+    rows.sort(key=lambda r: r[0], reverse=True)
+
+    table_rows = ""
+    for pct, pname, ort, ampel, color, buch, umsatz in rows:
+        bar_w = min(int(pct), 100)
+        table_rows += (
+            f"<tr>"
+            f"<td style='font-size:16px;text-align:center'>{ampel}</td>"
+            f"<td style='font-weight:500'>{pname}</td>"
+            f"<td style='color:#666;font-size:12px'>{ort}</td>"
+            f"<td class='num' style='color:{color};font-weight:700'>{pct:.1f} %</td>"
+            f"<td style='width:120px'>"
+            f"<div style='background:#eee;border-radius:4px;height:10px'>"
+            f"<div style='width:{bar_w}%;background:{color};height:10px;border-radius:4px'></div>"
+            f"</div></td>"
+            f"<td class='num'>{buch}</td>"
+            f"<td class='num'>{'{:,.0f} €'.format(umsatz).replace(',','.')}</td>"
+            f"</tr>"
+        )
+
+    n_gruen = sum(1 for r in rows if r[3] == "🟢")
+    n_gelb  = sum(1 for r in rows if r[3] == "🟡")
+    n_rot   = sum(1 for r in rows if r[3] == "🔴")
+
+    return f'''
+    <div class="chart-container">
+        <h3>&#128993; Auslastungsampel {current_year}</h3>
+        <p style="color:#666;font-size:13px;margin-bottom:12px;">
+            🟢 &ge;60 % ({n_gruen} Objekte) &nbsp;|&nbsp;
+            🟡 35–59 % ({n_gelb} Objekte) &nbsp;|&nbsp;
+            🔴 &lt;35 % ({n_rot} Objekte) &nbsp;|&nbsp;
+            Auslastung = gebuchte Nächte ÷ 365
+        </p>
+        <div style="overflow-x:auto">
+        <table class="prov-table">
+            <thead><tr>
+                <th style="text-align:center">Ampel</th>
+                <th>Unterkunft</th>
+                <th>Ort</th>
+                <th class="num">Auslastung</th>
+                <th></th>
+                <th class="num">Buchungen</th>
+                <th class="num">Reisepreis</th>
+            </tr></thead>
+            <tbody>{table_rows if table_rows else
+                "<tr><td colspan='7' style='text-align:center;color:#999'>Keine Daten</td></tr>"}</tbody>
+        </table></div>
+    </div>'''
+
+
 def _build_planung_tab(bookings, current_year):
     """Planungs-Tab: Reinigungsteam / Objektbetreuer / Management."""
     from datetime import date, timedelta
@@ -868,20 +935,31 @@ def _build_planung_tab(bookings, current_year):
     # ── BEREICH 1: Reinigungsteam – Anreisen/Abreisen nächste 4 Wochen ──────
     days_ahead = 28
     from collections import defaultdict
-    arrivals  = defaultdict(list)
-    departures = defaultdict(list)
+    arrivals   = defaultdict(list)   # date → [(name, ort)]
+    departures = defaultdict(list)   # date → [(name, ort)]
+    orte_set   = set()
     for b in future:
         a_date = b["anreise"].date()
+        ort = b.get("ort", "") or ""
+        orte_set.add(ort)
         if a_date <= today + timedelta(days=days_ahead):
-            arrivals[a_date].append(b["unterkunft"])
+            arrivals[a_date].append((b["unterkunft"], ort))
         dep_str = b.get("abreise_str", "")
         try:
             from datetime import datetime
             d_date = datetime.strptime(dep_str, "%d.%m.%Y").date()
             if today <= d_date <= today + timedelta(days=days_ahead):
-                departures[d_date].append(b["unterkunft"])
+                departures[d_date].append((b["unterkunft"], ort))
         except Exception:
             pass
+
+    # Ort-Filter Buttons
+    all_orte = sorted(o for o in orte_set if o)
+    ort_btns = '<button class="ort-btn active" onclick="filterOrt(\'\')" data-ort="">Alle</button> '
+    ort_btns += " ".join(
+        f'<button class="ort-btn" onclick="filterOrt(\'{o}\')" data-ort="{o}">{o}</button>'
+        for o in all_orte
+    )
 
     cleaning_rows = ""
     for offset in range(days_ahead + 1):
@@ -893,12 +971,14 @@ def _build_planung_tab(bookings, current_year):
         weekday = ["Mo","Di","Mi","Do","Fr","Sa","So"][day.weekday()]
         is_we = day.weekday() >= 5
         row_style = "background:#fff8e1;" if is_we else ""
-        arr_html = (", ".join(f"<span style='color:#2d7a2d'>{n}</span>" for n in arr)
+        # Alle Orte dieser Zeile (für data-ort Attribut)
+        row_orte = "|".join(set(o for _, o in arr) | set(o for _, o in dep))
+        arr_html = (", ".join(f"<span style='color:#2d7a2d'>{n}</span>" for n, o in arr)
                     if arr else "<span style='color:#ccc'>–</span>")
-        dep_html = (", ".join(f"<span style='color:#cc3333'>{n}</span>" for n in dep)
+        dep_html = (", ".join(f"<span style='color:#cc3333'>{n}</span>" for n, o in dep)
                     if dep else "<span style='color:#ccc'>–</span>")
         cleaning_rows += (
-            f"<tr style='{row_style}'>"
+            f"<tr style='{row_style}' data-ort='{row_orte}'>"
             f"<td style='white-space:nowrap;font-weight:500'>{weekday} {day.strftime('%d.%m.')}</td>"
             f"<td class='num' style='color:#2d7a2d;font-weight:700'>{len(arr)}</td>"
             f"<td style='font-size:12px'>{arr_html}</td>"
@@ -1011,15 +1091,38 @@ def _build_planung_tab(bookings, current_year):
         )
 
     return f'''
+    <style>
+        .ort-btn {{
+            display:inline-block; margin:0 4px 8px 0; padding:5px 14px;
+            border:1px solid #0066cc; border-radius:20px; background:white;
+            color:#0066cc; cursor:pointer; font-size:13px; font-weight:500;
+        }}
+        .ort-btn.active {{ background:#0066cc; color:white; }}
+        .ort-btn:hover {{ background:#e8f0fe; }}
+        .ort-btn.active:hover {{ background:#0052a3; }}
+    </style>
+    <script>
+        function filterOrt(ort) {{
+            document.querySelectorAll('.ort-btn').forEach(b => {{
+                b.classList.toggle('active', b.dataset.ort === ort);
+            }});
+            document.querySelectorAll('#reinigung-table tbody tr').forEach(row => {{
+                if (!ort) {{ row.style.display = ''; return; }}
+                const rowOrte = (row.dataset.ort || '').split('|');
+                row.style.display = rowOrte.includes(ort) ? '' : 'none';
+            }});
+        }}
+    </script>
     <div class="chart-container">
         <h3>&#129529; Reinigungsteam – Anreisen &amp; Abreisen (nächste 4 Wochen)</h3>
-        <p style="color:#666;font-size:13px;margin-bottom:12px;">
+        <p style="color:#666;font-size:13px;margin-bottom:8px;">
             <span style="color:#2d7a2d">&#9650; Anreisen</span> &nbsp;
             <span style="color:#cc3333">&#9660; Abreisen</span> &nbsp;|&nbsp;
             Wochenenden hervorgehoben
         </p>
+        <div style="margin-bottom:12px">{ort_btns}</div>
         <div style="overflow-x:auto">
-        <table class="prov-table">
+        <table class="prov-table" id="reinigung-table">
             <thead><tr>
                 <th>Datum</th>
                 <th class="num">Anreisen</th>
@@ -2426,7 +2529,8 @@ def generate_html(data):
     # Each value is a fully-rendered HTML string.
     tab_contents = {
         "uebersicht": (
-            bestand_html + "\n" + kpi_html
+            bestand_html + "\n" + kpi_html + "\n" +
+            _build_auslastungsampel(property_data, current_year)
         ),
         "jahresvergleich": (
             '''<div class="chart-container">
