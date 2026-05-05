@@ -82,6 +82,37 @@ _OBJEKT_ZU_HAUS = {
     for obj in objekte
 }
 
+# ---------------------------------------------------------------------------
+# Eigentümer-Mapping: Objekt-Nr (str) → {eigentuemer, provision_pct_excel}
+# Wird aus Unterkuenfte_Provisionssatz.xlsx geladen (falls vorhanden)
+# ---------------------------------------------------------------------------
+EIGENTUEMER_EXCEL = os.path.join(SCRIPT_DIR, "Unterkuenfte_Provisionssatz.xlsx")
+
+def _load_eigentuemer_mapping():
+    """Lädt Eigentümer + Provisionssatz aus der Excel-Datei."""
+    mapping = {}
+    if not os.path.exists(EIGENTUEMER_EXCEL):
+        return mapping
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(EIGENTUEMER_EXCEL, read_only=True, data_only=True)
+        ws = wb.active
+        for r in range(2, ws.max_row + 1):
+            eigentuemer = str(ws.cell(r, 1).value or "").strip()
+            nr = str(ws.cell(r, 2).value or "").strip()
+            prov_raw = str(ws.cell(r, 5).value or "").strip()
+            if nr:
+                mapping[nr] = {
+                    "eigentuemer": eigentuemer,
+                    "provision_pct_excel": prov_raw,
+                }
+        wb.close()
+    except Exception:
+        pass
+    return mapping
+
+_EIGENTUEMER_MAPPING = _load_eigentuemer_mapping()
+
 
 def parse_german_number(s):
     """Parse a German-formatted number (e.g. '1.234,56') to float."""
@@ -459,6 +490,10 @@ def compute_data(bookings):
 
     for prop_name, pbs in sorted(prop_bookings.items()):
         ort = pbs[0]["ort"] if pbs else ""
+        obj_nr = pbs[0]["objekt_nr"] if pbs else ""
+        em = _EIGENTUEMER_MAPPING.get(obj_nr, {})
+        eigentuemer = em.get("eigentuemer", "")
+        provision_pct_excel = em.get("provision_pct_excel", "")
         p_years = {}
         for y in years:
             ybs = [b for b in pbs if b["anreise"].year == y]
@@ -508,7 +543,12 @@ def compute_data(bookings):
                 "channels": ch_sorted, "zusatzkosten": zk_list
             }
 
-        property_data[prop_name] = {"ort": ort, "years": p_years}
+        property_data[prop_name] = {
+            "ort": ort, "years": p_years,
+            "objekt_nr": obj_nr,
+            "eigentuemer": eigentuemer,
+            "provision_pct_excel": provision_pct_excel,
+        }
 
     # --- Provision summary per property (for Provisionen tab) ---
     provision_by_prop = {}
@@ -528,7 +568,13 @@ def compute_data(bookings):
                 "provision_pct": yd["provision_pct"],
             }
         if prop_prov:
-            provision_by_prop[prop_name] = {"ort": pd["ort"], "years": prop_prov}
+            provision_by_prop[prop_name] = {
+                "ort": pd["ort"],
+                "objekt_nr": pd.get("objekt_nr", ""),
+                "eigentuemer": pd.get("eigentuemer", ""),
+                "provision_pct_excel": pd.get("provision_pct_excel", ""),
+                "years": prop_prov,
+            }
 
     # --- Apartmenthaus aggregation ---
     # {haus_name: {year: {unit_name: {buchungen, umsatz}}}}
@@ -556,6 +602,26 @@ def compute_data(bookings):
                 haus_year_data[haus_name][y][unit]["miete_eigentuemer"] += b["miete_eigentuemer"]
                 break
 
+    # --- Provision aggregation per Eigentümer ---
+    # {eigentuemer: {year: {buchungen, miete_gesamt, miete_vermittler, provision_gesamt}}}
+    provision_by_eigentuemer = {}
+    for prop_name, pprov in provision_by_prop.items():
+        eg = pprov.get("eigentuemer", "") or "Unbekannt"
+        if eg not in provision_by_eigentuemer:
+            provision_by_eigentuemer[eg] = {}
+        for y, py in pprov["years"].items():
+            if y not in provision_by_eigentuemer[eg]:
+                provision_by_eigentuemer[eg][y] = {
+                    "buchungen": 0, "miete_gesamt": 0.0,
+                    "miete_vermittler": 0.0, "provision_gesamt": 0.0,
+                    "unterkuenfte": []
+                }
+            provision_by_eigentuemer[eg][y]["buchungen"] += py["buchungen"]
+            provision_by_eigentuemer[eg][y]["miete_gesamt"] += py["miete_gesamt"]
+            provision_by_eigentuemer[eg][y]["miete_vermittler"] += py["miete_vermittler"]
+            provision_by_eigentuemer[eg][y]["provision_gesamt"] += py["provision_gesamt"]
+            provision_by_eigentuemer[eg][y]["unterkuenfte"].append(prop_name)
+
     return {
         "years": years,
         "kpis": kpis,
@@ -569,6 +635,7 @@ def compute_data(bookings):
         "zusatz_year_totals": zusatz_year_totals,
         "property_data": property_data,
         "provision_by_prop": provision_by_prop,
+        "provision_by_eigentuemer": provision_by_eigentuemer,
         "profile_order": profile_order,
         "profile_colors": profile_colors,
         "profiles_by_year": profiles_by_year,
@@ -602,6 +669,7 @@ def generate_html(data):
     zusatz_year_totals = data["zusatz_year_totals"]
     property_data = data["property_data"]
     provision_by_prop = data["provision_by_prop"]
+    provision_by_eigentuemer = data.get("provision_by_eigentuemer", {})
     profile_order = data["profile_order"]
     profile_colors = data["profile_colors"]
     profiles_by_year = data["profiles_by_year"]
@@ -926,32 +994,56 @@ def generate_html(data):
         prov_rate_avg = round(mv_total / mg_total * 100, 1) if mg_total > 0 else 0
         zk_verm_year = zusatz_year_totals[y]["vermittler"]
 
-        # Zeilen pro Unterkunft
+        # Zeilen pro Unterkunft (mit Eigent\u00fcmer)
         year_rows = []
         sum_mg = sum_mv = sum_zv = sum_pg = 0
         for pname, pprov in sorted(provision_by_prop.items()):
             if y not in pprov["years"]:
                 continue
             py = pprov["years"][y]
-            year_rows.append((pname, pprov["ort"], py))
+            year_rows.append((pname, pprov["ort"], pprov.get("eigentuemer", ""), pprov.get("provision_pct_excel", ""), py))
             sum_mg += py["miete_gesamt"]
             sum_mv += py["miete_vermittler"]
             sum_zv += py["zusatz_vermittler"]
             sum_pg += py["provision_gesamt"]
-        year_rows.sort(key=lambda x: -x[2]["provision_gesamt"])
+        year_rows.sort(key=lambda x: -x[4]["provision_gesamt"])
 
         table_rows_html = ""
-        for pname, ort, py in year_rows:
+        for pname, ort, eg, pct_excel, py in year_rows:
             table_rows_html += f'''
                     <tr>
                         <td>{pname}</td>
                         <td>{ort}</td>
+                        <td style="font-size:12px;color:#555;">{eg}</td>
+                        <td class="num" style="color:#888;">{pct_excel}</td>
                         <td class="num">{py["buchungen"]}</td>
                         <td class="num">{format_euro(py["miete_gesamt"])}</td>
                         <td class="num">{format_euro(py["miete_vermittler"])}</td>
                         <td class="num">{format_euro(py["zusatz_vermittler"])}</td>
                         <td class="num"><strong>{format_euro(py["provision_gesamt"])}</strong></td>
                         <td class="num">{format_german_number(py["provision_pct"], 1)} %</td>
+                    </tr>'''
+
+        # Eigent\u00fcmer-Aggregation f\u00fcr dieses Jahr
+        eg_rows = []
+        for eg_name, eg_years in provision_by_eigentuemer.items():
+            if y not in eg_years:
+                continue
+            ey = eg_years[y]
+            eg_rows.append((eg_name, ey))
+        eg_rows.sort(key=lambda x: -x[1]["provision_gesamt"])
+
+        eg_table_html = ""
+        for eg_name, ey in eg_rows:
+            eg_pct = round(ey["miete_vermittler"] / ey["miete_gesamt"] * 100, 1) if ey["miete_gesamt"] > 0 else 0
+            eg_table_html += f'''
+                    <tr>
+                        <td>{eg_name}</td>
+                        <td class="num">{ey["buchungen"]}</td>
+                        <td class="num">{format_euro(ey["miete_gesamt"])}</td>
+                        <td class="num">{format_euro(ey["miete_vermittler"])}</td>
+                        <td class="num"><strong>{format_euro(ey["provision_gesamt"])}</strong></td>
+                        <td class="num">{format_german_number(eg_pct, 1)} %</td>
                     </tr>'''
 
         sum_pct = round(sum_mv / sum_mg * 100, 1) if sum_mg > 0 else 0
@@ -970,33 +1062,69 @@ def generate_html(data):
             </div>
             <div id="{section_id}" style="display:{collapsed};padding:16px;">
                 <div class="prop-detail-grid" style="margin-bottom:16px;">
-                    <div class="prop-kpi"><div class="pk-label">Provision (Miete Verm.)</div><div class="pk-value green">{format_euro(mv_total)}</div></div>
+                    <div class="prop-kpi"><div class="pk-label">Provision Ostseeliebe</div><div class="pk-value green">{format_euro(mv_total)}</div></div>
                     <div class="prop-kpi"><div class="pk-label">Miete gesamt</div><div class="pk-value">{format_euro(mg_total)}</div></div>
                     <div class="prop-kpi"><div class="pk-label">\u00d8 Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
                     <div class="prop-kpi"><div class="pk-label">Zusatzk. Vermittler (Info)</div><div class="pk-value" style="color:#888">{format_euro(zk_verm_year)}</div></div>
                 </div>
-                <div style="overflow-x:auto;">
-                <table class="prov-table">
-                    <thead><tr>
-                        <th>Unterkunft</th><th>Ort</th>
-                        <th class="num">Buchungen</th><th class="num">Miete ges.</th>
-                        <th class="num">Miete Verm.</th><th class="num">Zusatzk. Verm.</th>
-                        <th class="num">Provision ges.</th><th class="num">Prov.satz</th>
-                    </tr></thead>
-                    <tbody>
-                        {table_rows_html}
-                        <tr class="prov-total">
-                            <td colspan="2"><strong>SUMME {y}</strong></td>
-                            <td></td>
-                            <td class="num"><strong>{format_euro(sum_mg)}</strong></td>
-                            <td class="num"><strong>{format_euro(sum_mv)}</strong></td>
-                            <td class="num"><strong>{format_euro(sum_zv)}</strong></td>
-                            <td class="num"><strong>{format_euro(sum_pg)}</strong></td>
-                            <td class="num"><strong>{format_german_number(sum_pct, 1)} %</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-                </div>
+
+                <!-- Eigent\u00fcmer-Aggregation -->
+                <details open style="margin-bottom:20px;border:1px solid #d0e4ff;border-radius:6px;overflow:hidden;">
+                    <summary style="cursor:pointer;background:#e8f0fe;padding:10px 14px;font-weight:600;color:#0066cc;list-style:none;display:flex;align-items:center;gap:8px;">
+                        <span>&#9654;</span> Provision nach Eigent\u00fcmer ({len(eg_rows)} Eigent\u00fcmer)
+                    </summary>
+                    <div style="padding:12px;overflow-x:auto;">
+                    <table class="prov-table">
+                        <thead><tr>
+                            <th>Eigent\u00fcmer</th>
+                            <th class="num">Buchungen</th><th class="num">Miete ges.</th>
+                            <th class="num">Miete Verm.</th>
+                            <th class="num">Provision Ostseeliebe</th><th class="num">Satz</th>
+                        </tr></thead>
+                        <tbody>
+                            {eg_table_html}
+                            <tr class="prov-total">
+                                <td><strong>SUMME {y}</strong></td>
+                                <td></td>
+                                <td class="num"><strong>{format_euro(sum_mg)}</strong></td>
+                                <td class="num"><strong>{format_euro(sum_mv)}</strong></td>
+                                <td class="num"><strong>{format_euro(sum_pg)}</strong></td>
+                                <td class="num"><strong>{format_german_number(sum_pct, 1)} %</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </div>
+                </details>
+
+                <!-- Details pro Unterkunft -->
+                <details style="border:1px solid #e0e0e0;border-radius:6px;overflow:hidden;">
+                    <summary style="cursor:pointer;background:#f8f9fa;padding:10px 14px;font-weight:600;color:#444;list-style:none;display:flex;align-items:center;gap:8px;">
+                        <span>&#9654;</span> Details pro Unterkunft ({len(year_rows)} Unterk\u00fcnfte)
+                    </summary>
+                    <div style="padding:12px;overflow-x:auto;">
+                    <table class="prov-table">
+                        <thead><tr>
+                            <th>Unterkunft</th><th>Ort</th>
+                            <th>Eigent\u00fcmer</th><th class="num">Satz (Vertrag)</th>
+                            <th class="num">Buchungen</th><th class="num">Miete ges.</th>
+                            <th class="num">Miete Verm.</th><th class="num">Zusatzk. Verm.</th>
+                            <th class="num">Provision ges.</th><th class="num">Satz (ist)</th>
+                        </tr></thead>
+                        <tbody>
+                            {table_rows_html}
+                            <tr class="prov-total">
+                                <td colspan="4"><strong>SUMME {y}</strong></td>
+                                <td></td>
+                                <td class="num"><strong>{format_euro(sum_mg)}</strong></td>
+                                <td class="num"><strong>{format_euro(sum_mv)}</strong></td>
+                                <td class="num"><strong>{format_euro(sum_zv)}</strong></td>
+                                <td class="num"><strong>{format_euro(sum_pg)}</strong></td>
+                                <td class="num"><strong>{format_german_number(sum_pct, 1)} %</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </div>
+                </details>
             </div>
         </div>''')
 
