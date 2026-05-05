@@ -2881,7 +2881,7 @@ def generate_property_html(prop_name, pdata, years):
                 <div class="kpi"><div class="kl">Miete gesamt</div><div class="kv">{format_euro(yd["miete_gesamt"])}</div></div>
                 <div class="kpi"><div class="kl">Miete Eigent\u00fcmer</div><div class="kv green">{format_euro(yd["miete_eigentuemer"])}</div></div>
                 <div class="kpi"><div class="kl">Provision (Verm.)</div><div class="kv" style="color:#e65100;">{format_euro(yd.get("miete_vermittler", 0))}</div></div>
-                <div class="kpi"><div class="kl">Prov.satz</div><div class="kv" style="color:#e65100;">{format_german_number(yd.get("provision_pct", 0), 1)} %</div></div>
+                <div class="kpi"><div class="kl">Prov.satz (Vertrag)</div><div class="kv" style="color:#0066cc;">{pdata.get("provision_pct_excel", "–") or "–"}</div></div>
                 <div class="kpi"><div class="kl">\u00d8 Preis/Nacht</div><div class="kv">{format_euro(yd["avg_preis_nacht"])}</div></div>
                 <div class="kpi"><div class="kl">\u00d8 Aufenthalt</div><div class="kv">{format_german_number(yd["avg_aufenthalt"], 1)} N.</div></div>
                 <div class="kpi"><div class="kl">Auslastung</div><div class="kv">{format_german_number(yd["belegung_pct"], 1)} %</div></div>
