@@ -256,6 +256,7 @@ def read_bookings(csv_path):
                 "vorgang": row[7].strip(),
                 "vertriebskanal": row[8].strip(),
                 "reisepreis": parse_german_number(row[11]),
+                "provision_betrag": parse_german_number(row[13]) if len(row) > 13 else 0.0,
                 "provision_pct": row[13].strip() if len(row) > 13 else "",
                 "miete_gesamt": parse_german_number(row[14]),
                 "miete_vermittler": parse_german_number(row[15]),
@@ -369,13 +370,19 @@ def compute_data(bookings):
         for b in yb:
             raw[b["vertriebskanal"]] += 1
 
+        # Provision pro Kanal summieren (nur Portalbuchungen)
+        prov_by_channel = defaultdict(float)
+        for b in yb:
+            prov_by_channel[b["vertriebskanal"]] += b["provision_betrag"]
+
         # Classify each channel
         ostl_sub = []
         portal_sub = []
         for k, v in sorted(raw.items(), key=lambda x: -x[1]):
             if not k:
                 continue
-            entry = {"name": k, "count": v, "pct": round(100 * v / year_total, 1) if year_total else 0}
+            entry = {"name": k, "count": v, "pct": round(100 * v / year_total, 1) if year_total else 0,
+                     "provision": round(prov_by_channel.get(k, 0), 2)}
             if k in OSTSEELIEBE_CHANNELS:
                 ostl_sub.append(entry)
             else:
@@ -386,13 +393,17 @@ def compute_data(bookings):
         if ostl_total > 0:
             grouped.append({"name": "Ostseeliebe", "count": ostl_total,
                             "pct": round(100 * ostl_total / year_total, 1) if year_total else 0,
+                            "provision": 0,  # keine Portalprovision für eigene Kanäle
                             "sub": ostl_sub})
         portal_total = sum(e["count"] for e in portal_sub)
+        portal_prov_total = round(sum(e["provision"] for e in portal_sub), 2)
         if portal_total > 0:
             grouped.append({"name": "Portalbuchungen", "count": portal_total,
                             "pct": round(100 * portal_total / year_total, 1) if year_total else 0,
+                            "provision": portal_prov_total,
                             "sub": portal_sub})
-        channels_by_year[y] = {"total": year_total, "channels": grouped}
+        channels_by_year[y] = {"total": year_total, "channels": grouped,
+                                "portal_provision": portal_prov_total}
 
     # --- Locations ---
     ort_counts = defaultdict(int)
@@ -1094,27 +1105,34 @@ def generate_html(data):
         chs = cy["channels"]
 
         # Table rows with expandable groups (Ostseeliebe + Portalbuchungen)
+        portal_prov_year = cy.get("portal_provision", 0)
         table_rows = ""
         for gi, ch in enumerate(chs):
-            # Safe CSS class from group name
             grp_cls = f"ch-g{gi}-{y}"
-            bg_color = "#f0f7ff" if gi == 0 else "#fff7f0"
-            sub_bg = "#f8fbff" if gi == 0 else "#fffbf8"
+            is_portal = ch["name"] == "Portalbuchungen"
+            bg_color = "#f0f7ff" if not is_portal else "#fff7f0"
+            sub_bg = "#f8fbff" if not is_portal else "#fffbf8"
+            prov_cell = f'<td class="zk-num"><strong style="color:#cc3333">{format_euro(ch["provision"])}</strong></td>' if is_portal else '<td class="zk-num" style="color:#ccc">–</td>'
             table_rows += f'''<tr class="ch-group" onclick="this.parentElement.querySelectorAll('.{grp_cls}').forEach(function(r){{r.style.display=r.style.display==='none'?'table-row':'none'}});" style="cursor:pointer;background:{bg_color}">
                 <td><strong>&#9654; {ch["name"]}</strong></td>
                 <td class="zk-num"><strong>{format_german_number(ch["count"], 0)}</strong></td>
                 <td class="zk-num"><strong>{ch["pct"]} %</strong></td>
+                {prov_cell}
             </tr>'''
             for sub in ch["sub"]:
+                sub_prov = sub.get("provision", 0)
+                sub_prov_cell = f'<td class="zk-num" style="color:#cc3333;font-size:12px">{format_euro(sub_prov)}</td>' if is_portal else '<td class="zk-num" style="color:#ccc">–</td>'
                 table_rows += f'''<tr class="{grp_cls}" style="display:none;background:{sub_bg}">
                     <td style="padding-left:28px">{sub["name"]}</td>
                     <td class="zk-num">{format_german_number(sub["count"], 0)}</td>
                     <td class="zk-num">{sub["pct"]} %</td>
+                    {sub_prov_cell}
                 </tr>'''
         table_rows += f'''<tr class="zk-total">
             <td><strong>Gesamt</strong></td>
             <td class="zk-num"><strong>{format_german_number(total, 0)}</strong></td>
             <td class="zk-num"><strong>100 %</strong></td>
+            <td class="zk-num"><strong style="color:#cc3333">{format_euro(portal_prov_year)}</strong></td>
         </tr>'''
 
         # Chart data for this year (Ostseeliebe vs Portalbuchungen)
@@ -1129,7 +1147,7 @@ def generate_html(data):
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
                 <div class="zusatz-summary">
                     <table class="zusatz-table">
-                        <thead><tr><th>Vertriebskanal</th><th class="zk-num">Buchungen</th><th class="zk-num">Anteil</th></tr></thead>
+                        <thead><tr><th>Vertriebskanal</th><th class="zk-num">Buchungen</th><th class="zk-num">Anteil</th><th class="zk-num">Portalprovision</th></tr></thead>
                         <tbody>{table_rows}</tbody>
                     </table>
                     <div style="font-size:11px;color:#888;margin-top:6px">&#9654; Klicke auf eine Gruppe um die Einzelkanäle aufzuklappen</div>
