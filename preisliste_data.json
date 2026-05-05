@@ -2,7 +2,7 @@
   "price_lists": [
     {
       "id": "163",
-      "name": "A01 - 2 Personen",
+      "name": "Preisliste 163",
       "accommodations": [
         {
           "nr": "245",
@@ -115,7 +115,7 @@
     },
     {
       "id": "198",
-      "name": "A01 - 2 Personen",
+      "name": "Preisliste 198",
       "accommodations": [
         {
           "nr": "135",
@@ -138,7 +138,7 @@
     },
     {
       "id": "117",
-      "name": "A02 - 2 Personen",
+      "name": "Preisliste 117",
       "accommodations": [
         {
           "nr": "219",
@@ -341,7 +341,7 @@
     },
     {
       "id": "98",
-      "name": "A03 - 2 Personen",
+      "name": "Preisliste 98",
       "accommodations": [
         {
           "nr": "233",
@@ -644,7 +644,7 @@
     },
     {
       "id": "197",
-      "name": "A03 - 2 Personen",
+      "name": "Preisliste 197",
       "accommodations": [],
       "season_prices": {
         "Spätherbst": 65.0,
@@ -661,7 +661,7 @@
     },
     {
       "id": "177",
-      "name": "A04 - 4 Personen",
+      "name": "Preisliste 177",
       "accommodations": [
         {
           "nr": "248",
@@ -684,7 +684,7 @@
     },
     {
       "id": "119",
-      "name": "A05 - 2 Personen",
+      "name": "Preisliste 119",
       "accommodations": [
         {
           "nr": "100",
@@ -757,7 +757,7 @@
     },
     {
       "id": "104",
-      "name": "A06 - 2 Personen",
+      "name": "Preisliste 104",
       "accommodations": [
         {
           "nr": "185",
@@ -890,7 +890,7 @@
     },
     {
       "id": "213",
-      "name": "A06 - 4 Personen",
+      "name": "Preisliste 213",
       "accommodations": [
         {
           "nr": "105",
@@ -928,7 +928,7 @@
     },
     {
       "id": "175",
-      "name": "A07 - 2 Personen",
+      "name": "Preisliste 175",
       "accommodations": [
         {
           "nr": "243",
@@ -981,7 +981,7 @@
     },
     {
       "id": "176",
-      "name": "A08 - 4 Personen",
+      "name": "Preisliste 176",
       "accommodations": [
         {
           "nr": "242",
@@ -1014,7 +1014,7 @@
     },
     {
       "id": "157",
-      "name": "A09 - 2 Personen",
+      "name": "Preisliste 157",
       "accommodations": [
         {
           "nr": "196",
@@ -1052,7 +1052,7 @@
     },
     {
       "id": "162",
-      "name": "A10 - 4 Personen",
+      "name": "Preisliste 162",
       "accommodations": [
         {
           "nr": "117",
@@ -1130,7 +1130,7 @@
     },
     {
       "id": "114",
-      "name": "A11 - 2 Personen",
+      "name": "Preisliste 114",
       "accommodations": [
         {
           "nr": "129",
@@ -1208,7 +1208,7 @@
     },
     {
       "id": "191",
-      "name": "A12 - 4 Personen",
+      "name": "Preisliste 191",
       "accommodations": [
         {
           "nr": "289",
@@ -1231,7 +1231,7 @@
     },
     {
       "id": "111",
-      "name": "A13 - 2 Personen",
+      "name": "Preisliste 111",
       "accommodations": [
         {
           "nr": "113",
@@ -1314,7 +1314,7 @@
     },
     {
       "id": "101",
-      "name": "A14 - 2 Personen",
+      "name": "Preisliste 101",
       "accommodations": [
         {
           "nr": "218",
@@ -1342,7 +1342,7 @@
     },
     {
       "id": "140",
-      "name": "A15 - 2 Personen",
+      "name": "Preisliste 140",
       "accommodations": [
         {
           "nr": "110",
@@ -1365,7 +1365,7 @@
     },
     {
       "id": "199",
-      "name": "A16 - 2 Personen",
+      "name": "Preisliste 199",
       "accommodations": [
         {
           "nr": "200",
@@ -1388,7 +1388,7 @@
     },
     {
       "id": "220",
-      "name": "B1 - Basic",
+      "name": "Preisliste 220",
       "accommodations": [
         {
           "nr": "30",
@@ -1451,7 +1451,7 @@
     },
     {
       "id": "221",
-      "name": "B2 - Komfort",
+      "name": "Preisliste 221",
       "accommodations": [
         {
           "nr": "42",
@@ -1489,7 +1489,7 @@
     },
     {
       "id": "222",
-      "name": "B3 - Premium",
+      "name": "Preisliste 222",
       "accommodations": [
         {
           "nr": "38",
@@ -1542,7 +1542,7 @@
     },
     {
       "id": "223",
-      "name": "B4 - Exklusiv",
+      "name": "Preisliste 223",
       "accommodations": [
         {
           "nr": "46",
@@ -1570,5 +1570,5 @@
     }
   ],
   "year": 2026,
-  "fetched_at": "2026-05-05T06:37:03.942507"
+  "fetched_at": "2026-05-05T11:07:19.933419"
 }
