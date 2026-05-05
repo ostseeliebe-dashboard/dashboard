@@ -913,39 +913,20 @@ def generate_html(data):
     # --- Build Provisionen tab HTML ---
     prov_tab_parts = []
     for y in years:
-        # Provision KPIs for this year \u2013 nur Mieteinnahmen (miete_vermittler)
+        is_current = (y == current_year)
+        collapsed = "none" if not is_current else "block"
+        arrow = "\u25bc" if is_current else "\u25b6"
+        section_id = f"prov-section-{y}"
+        arrow_id = f"prov-arrow-{y}"
+
+        # Provision KPIs f\u00fcr dieses Jahr
         k = kpis[y]
         mv_total = k["miete_vermittler"]
         mg_total = k["miete_gesamt"]
         prov_rate_avg = round(mv_total / mg_total * 100, 1) if mg_total > 0 else 0
-        # Zusatzkosten Vermittler \u2013 nur zur Info, nicht in Provision eingerechnet
         zk_verm_year = zusatz_year_totals[y]["vermittler"]
 
-        prov_tab_parts.append(f'''
-        <div class="prop-section">
-            <h4 style="color:#0066cc;border-bottom:2px solid #e0e0e0;padding-bottom:6px;font-size:18px;">{y}</h4>
-            <div class="prop-detail-grid" style="margin-bottom:16px;">
-                <div class="prop-kpi"><div class="pk-label">Provision (Miete Verm.)</div><div class="pk-value green">{format_euro(mv_total)}</div></div>
-                <div class="prop-kpi"><div class="pk-label">Miete gesamt</div><div class="pk-value">{format_euro(mg_total)}</div></div>
-                <div class="prop-kpi"><div class="pk-label">\u00d8 Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
-                <div class="prop-kpi"><div class="pk-label">Zusatzk. Vermittler (Info)</div><div class="pk-value" style="color:#888">{format_euro(zk_verm_year)}</div></div>
-            </div>
-            <div style="overflow-x:auto;">
-            <table class="prov-table">
-                <thead>
-                    <tr>
-                        <th>Unterkunft</th>
-                        <th>Ort</th>
-                        <th class="num">Buchungen</th>
-                        <th class="num">Miete ges.</th>
-                        <th class="num">Miete Verm.</th>
-                        <th class="num">Zusatzk. Verm.</th>
-                        <th class="num">Provision ges.</th>
-                        <th class="num">Prov.satz</th>
-                    </tr>
-                </thead>
-                <tbody>''')
-        # Rows per property for this year, sorted by provision desc
+        # Zeilen pro Unterkunft
         year_rows = []
         sum_mg = sum_mv = sum_zv = sum_pg = 0
         for pname, pprov in sorted(provision_by_prop.items()):
@@ -957,10 +938,11 @@ def generate_html(data):
             sum_mv += py["miete_vermittler"]
             sum_zv += py["zusatz_vermittler"]
             sum_pg += py["provision_gesamt"]
-
         year_rows.sort(key=lambda x: -x[2]["provision_gesamt"])
+
+        table_rows_html = ""
         for pname, ort, py in year_rows:
-            prov_tab_parts.append(f'''
+            table_rows_html += f'''
                     <tr>
                         <td>{pname}</td>
                         <td>{ort}</td>
@@ -970,21 +952,51 @@ def generate_html(data):
                         <td class="num">{format_euro(py["zusatz_vermittler"])}</td>
                         <td class="num"><strong>{format_euro(py["provision_gesamt"])}</strong></td>
                         <td class="num">{format_german_number(py["provision_pct"], 1)} %</td>
-                    </tr>''')
+                    </tr>'''
 
         sum_pct = round(sum_mv / sum_mg * 100, 1) if sum_mg > 0 else 0
+        header_bg = "#0066cc" if is_current else "#f0f4fa"
+        header_color = "#fff" if is_current else "#0066cc"
+
         prov_tab_parts.append(f'''
-                    <tr class="prov-total">
-                        <td colspan="2"><strong>SUMME {y}</strong></td>
-                        <td></td>
-                        <td class="num"><strong>{format_euro(sum_mg)}</strong></td>
-                        <td class="num"><strong>{format_euro(sum_mv)}</strong></td>
-                        <td class="num"><strong>{format_euro(sum_zv)}</strong></td>
-                        <td class="num"><strong>{format_euro(sum_pg)}</strong></td>
-                        <td class="num"><strong>{format_german_number(sum_pct, 1)} %</strong></td>
-                    </tr>
-                </tbody>
-            </table>
+        <div style="margin-bottom:12px;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+            <div onclick="var c=document.getElementById('{section_id}');var a=document.getElementById('{arrow_id}');c.style.display=c.style.display==='none'?'block':'none';a.textContent=c.style.display==='none'?'\u25b6':'\u25bc';"
+                 style="cursor:pointer;background:{header_bg};padding:12px 18px;display:flex;align-items:center;justify-content:space-between;user-select:none;">
+                <span style="font-size:17px;font-weight:700;color:{header_color};">{y}</span>
+                <div style="display:flex;align-items:center;gap:24px;">
+                    <span style="font-size:13px;color:{header_color};opacity:0.9;">Provision: {format_euro(mv_total)} &nbsp;|&nbsp; Satz: {format_german_number(prov_rate_avg, 1)} %</span>
+                    <span id="{arrow_id}" style="font-size:14px;color:{header_color};">{arrow}</span>
+                </div>
+            </div>
+            <div id="{section_id}" style="display:{collapsed};padding:16px;">
+                <div class="prop-detail-grid" style="margin-bottom:16px;">
+                    <div class="prop-kpi"><div class="pk-label">Provision (Miete Verm.)</div><div class="pk-value green">{format_euro(mv_total)}</div></div>
+                    <div class="prop-kpi"><div class="pk-label">Miete gesamt</div><div class="pk-value">{format_euro(mg_total)}</div></div>
+                    <div class="prop-kpi"><div class="pk-label">\u00d8 Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
+                    <div class="prop-kpi"><div class="pk-label">Zusatzk. Vermittler (Info)</div><div class="pk-value" style="color:#888">{format_euro(zk_verm_year)}</div></div>
+                </div>
+                <div style="overflow-x:auto;">
+                <table class="prov-table">
+                    <thead><tr>
+                        <th>Unterkunft</th><th>Ort</th>
+                        <th class="num">Buchungen</th><th class="num">Miete ges.</th>
+                        <th class="num">Miete Verm.</th><th class="num">Zusatzk. Verm.</th>
+                        <th class="num">Provision ges.</th><th class="num">Prov.satz</th>
+                    </tr></thead>
+                    <tbody>
+                        {table_rows_html}
+                        <tr class="prov-total">
+                            <td colspan="2"><strong>SUMME {y}</strong></td>
+                            <td></td>
+                            <td class="num"><strong>{format_euro(sum_mg)}</strong></td>
+                            <td class="num"><strong>{format_euro(sum_mv)}</strong></td>
+                            <td class="num"><strong>{format_euro(sum_zv)}</strong></td>
+                            <td class="num"><strong>{format_euro(sum_pg)}</strong></td>
+                            <td class="num"><strong>{format_german_number(sum_pct, 1)} %</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
             </div>
         </div>''')
 
