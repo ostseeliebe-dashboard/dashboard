@@ -185,7 +185,14 @@ def read_bookings(csv_path):
     with open(csv_path, "r", encoding="utf-8") as f:
         reader = csv.reader(f, delimiter=";")
         header1 = next(reader)
-        header2 = next(reader)
+
+        # Zweite Zeile: entweder eine zweite Kopfzeile (Contao-UI-Export)
+        # oder bereits die erste Datenzeile (fetch_contao_data.py-Export).
+        # Wir legen sie in einen Puffer und verarbeiten sie ggf. als Datenzeile.
+        try:
+            header2 = next(reader)
+        except StopIteration:
+            header2 = None
 
         # Parse Zusatzkosten column pairs (Vermittler at odd idx, Eigentümer at idx+1)
         for i in range(17, len(header1), 2):
@@ -193,7 +200,13 @@ def read_bookings(csv_path):
             if name:
                 zusatz_categories.append((i, name))
 
-        for row in reader:
+        # Zeilen-Iterator: header2 voranstellen falls es eine Datenzeile ist
+        def _rows():
+            if header2 is not None:
+                yield header2
+            yield from reader
+
+        for row in _rows():
             if len(row) < 17:
                 continue
             status = row[9].strip()
@@ -1466,16 +1479,25 @@ def generate_html(data):
 
     # --- Build Umsatz-Ranking tab HTML ---
     ranking_data = []
+    current_year = datetime.now().year
     for pname, pd in property_data.items():
         total_umsatz = sum(pd["years"].get(y, {}).get("reisepreis", 0) for y in years)
         if total_umsatz == 0:
             continue
+        total_naechte = sum(pd["years"].get(y, {}).get("naechte", 0) for y in years)
+        total_buchungen = sum(pd["years"].get(y, {}).get("buchungen", 0) for y in years)
+        # Auslastung: gebuchte N\u00e4chte / verf\u00fcgbare N\u00e4chte im Zeitraum
+        # Verf\u00fcgbare N\u00e4chte = Anzahl Jahre \u00d7 365 (ohne Schaltjahre-Korrektur)
+        verfuegbar = len([y for y in years if y <= current_year]) * 365
+        auslastung = round(total_naechte / verfuegbar * 100, 1) if verfuegbar > 0 else 0
         ranking_data.append({
             "name": pname,
             "ort": pd["ort"],
             "total": total_umsatz,
             "per_year": {y: pd["years"].get(y, {}).get("reisepreis", 0) for y in years},
-            "buchungen": sum(pd["years"].get(y, {}).get("buchungen", 0) for y in years),
+            "buchungen": total_buchungen,
+            "naechte": total_naechte,
+            "auslastung": auslastung,
         })
     ranking_data.sort(key=lambda x: -x["total"])
 
@@ -1492,6 +1514,9 @@ def generate_html(data):
             for y in years
         )
         row_style = " style='background:#fffef0'" if i <= 3 else ""
+        # Auslastungs-Farbe
+        asl = item["auslastung"]
+        asl_color = "#2d7a2d" if asl >= 60 else ("#e67e00" if asl >= 30 else "#cc3333")
         ranking_rows += f'''
                 <tr{row_style}>
                     <td class="num" style="font-size:15px;text-align:center;width:52px">{medal}</td>
@@ -1502,6 +1527,8 @@ def generate_html(data):
                     <td style="color:#666;font-size:12px">{item["ort"]}</td>
                     {year_cells}
                     <td class="num"><strong style="color:var(--color-primary)">{format_euro(item["total"])}</strong></td>
+                    <td class="num" style="color:#555">{int(item["naechte"])}</td>
+                    <td class="num" style="color:{asl_color};font-weight:600">{asl:.1f}\u00a0%</td>
                 </tr>'''
 
     yr_range = f"{min(years)}\u2013{max(years)}" if years else ""
@@ -1510,6 +1537,7 @@ def generate_html(data):
         <h3>&#127942; Umsatz-Ranking nach Unterkunft</h3>
         <p style="color:#666;font-size:13px;margin-bottom:20px;">
             Gesamtumsatz (Reisepreis) {yr_range}. Platz\u00a01\u00a0=\u00a0st\u00e4rkste Unterkunft &mdash; alle {len(ranking_data)} Unterk\u00fcnfte mit Buchungen im Zeitraum.
+            Auslastung = gebuchte N\u00e4chte \u00f7 verf\u00fcgbare Tage im Zeitraum.
         </p>
         <div style="overflow-x:auto;">
         <table class="prov-table">
@@ -1520,6 +1548,8 @@ def generate_html(data):
                     <th>Ort</th>
                     {year_headers_r}
                     <th class="num">Gesamt</th>
+                    <th class="num">N\u00e4chte</th>
+                    <th class="num">Auslastung</th>
                 </tr>
             </thead>
             <tbody>
@@ -1548,27 +1578,62 @@ def generate_html(data):
 
         # Helper: derive price group label from list name
         def _pg_label(name):
-            for stop in [" - ", " Haus", " Barth", " reduz", " spez"]:
+            for stop in [" - ", " Haus", " Barth", " reduz", " spez", " Personen"]:
                 idx = name.find(stop)
                 if idx > 0:
                     return name[:idx].strip()
             return name.strip()
 
-        # PG color map
-        PG_COLORS = {
-            "00": "#e8e8e8",
-            "PG 01": "#FFF2CC", "PG 02": "#FCE4D6", "PG 03": "#DDEBF7",
-            "PG 04": "#E2EFDA", "PG 05": "#F4CCCC", "PG 06": "#D9EAD3",
-            "PG 07": "#CFE2F3", "PG 08": "#FFF2CC", "PG 09": "#FCE4D6",
-            "PG 10": "#DDEBF7", "PG 10.2": "#E2EFDA", "PG 11": "#F4CCCC",
-            "PG 11.4": "#D9EAD3", "PG 12": "#CFE2F3", "PG 13": "#FFF2CC",
-            "PG 14": "#FCE4D6", "PG 15": "#DDEBF7", "PG 16": "#E2EFDA",
-            "PG 17.4": "#F4CCCC", "PG 18": "#D9EAD3", "PG 19": "#CFE2F3",
-            "PG 20": "#FFF2CC", "PG 21": "#FCE4D6",
+        # Saisonzeiträume (typische Ostseeliebe-Daten)
+        SEASON_DATES = {
+            "Winter":              "01.01.–28.02. & 01.11.–19.12.",
+            "Frühling I":          "01.03.–11.04.",
+            "Frühling II":         "12.04.–16.05.",
+            "Frühsommer":          "17.05.–20.06.",
+            "Strandzeit I":        "21.06.–01.08.",
+            "Strandzeit II":       "02.08.–06.09.",
+            "Kranichzeit":         "07.09.–31.10.",
+            "Spätherbst":          "01.11.–19.12.",
+            "Weihnachten":         "20.12.–26.12.",
+            "Silvester - Neujahr": "27.12.–04.01.",
+            "Ostern":              "Karwoche–Ostermontag",
         }
 
-        # Build header
-        season_headers = "".join(f'<th class="num">{s}</th>' for s in all_seasons)
+        # PG color map – deckt PG-Namen (PG 01 …) UND A-Gruppen (A01 …) und B-Gruppen ab
+        _PALETTE = [
+            "#FFF2CC","#FCE4D6","#DDEBF7","#E2EFDA","#F4CCCC",
+            "#D9EAD3","#CFE2F3","#EAD1DC","#D0E4F5","#F9E4B7",
+        ]
+        PG_COLORS = {
+            "00": "#e8e8e8",
+            # Altes PG-Schema
+            "PG 01":"#FFF2CC","PG 02":"#FCE4D6","PG 03":"#DDEBF7",
+            "PG 04":"#E2EFDA","PG 05":"#F4CCCC","PG 06":"#D9EAD3",
+            "PG 07":"#CFE2F3","PG 08":"#FFF2CC","PG 09":"#FCE4D6",
+            "PG 10":"#DDEBF7","PG 10.2":"#E2EFDA","PG 11":"#F4CCCC",
+            "PG 11.4":"#D9EAD3","PG 12":"#CFE2F3","PG 13":"#FFF2CC",
+            "PG 14":"#FCE4D6","PG 15":"#DDEBF7","PG 16":"#E2EFDA",
+            "PG 17.4":"#F4CCCC","PG 18":"#D9EAD3","PG 19":"#CFE2F3",
+            "PG 20":"#FFF2CC","PG 21":"#FCE4D6",
+            # Neues A-Schema (A01–A16)
+            "A01":"#FFF2CC","A02":"#FCE4D6","A03":"#DDEBF7",
+            "A04":"#E2EFDA","A05":"#F4CCCC","A06":"#D9EAD3",
+            "A07":"#CFE2F3","A08":"#EAD1DC","A09":"#D0E4F5",
+            "A10":"#F9E4B7","A11":"#FFF2CC","A12":"#FCE4D6",
+            "A13":"#DDEBF7","A14":"#E2EFDA","A15":"#F4CCCC","A16":"#D9EAD3",
+            # B-Gruppen (Apartmenthaus)
+            "B1":"#e8f4e8","B2":"#d4ecd4","B3":"#bfe0bf","B4":"#a8d4a8",
+        }
+
+        # Build header – Saisonname + Zeitraum als Tooltip/Zweizeiler
+        def _season_th(s):
+            dates = SEASON_DATES.get(s, "")
+            if dates:
+                return (f'<th class="num" title="{dates}" style="cursor:help;">'
+                        f'{s}<br><small style="color:#999;font-weight:400">{dates}</small></th>')
+            return f'<th class="num">{s}</th>'
+
+        season_headers = "".join(_season_th(s) for s in all_seasons)
         pl_header = f'''
             <tr>
                 <th>Preisgruppe</th>
