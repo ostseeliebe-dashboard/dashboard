@@ -554,17 +554,27 @@ def compute_data(bookings):
     provision_by_prop = {}
     for prop_name, pd in sorted(property_data.items()):
         prop_prov = {}
+        # Vertragssatz aus Excel als Dezimalzahl (z.B. "17%" → 0.17)
+        _pct_excel_str = pd.get("provision_pct_excel", "")
+        try:
+            _contracted_rate = float(_pct_excel_str.replace("%", "").replace(",", ".").strip()) / 100
+        except (ValueError, AttributeError):
+            _contracted_rate = 0.0
         for y in years:
             yd = pd["years"].get(y, {})
             if yd.get("buchungen", 0) == 0:
                 continue
             zk_verm = sum(z["vermittler"] for z in yd.get("zusatzkosten", []))
+            mg = yd["miete_gesamt"]
+            # Provision laut Vertrag = Miete gesamt × Vertragssatz
+            prov_laut_vertrag = round(mg * _contracted_rate, 2) if _contracted_rate else None
             prop_prov[y] = {
                 "buchungen": yd["buchungen"],
-                "miete_gesamt": yd["miete_gesamt"],
+                "miete_gesamt": mg,
                 "miete_vermittler": yd["miete_vermittler"],
                 "zusatz_vermittler": round(zk_verm, 2),
-                "provision_gesamt": round(yd["miete_vermittler"], 2),  # nur Mieteinnahmen
+                "provision_gesamt": round(yd["miete_vermittler"], 2),  # Contao-Wert
+                "provision_laut_vertrag": prov_laut_vertrag,           # Option A: MG × Vertragssatz
                 "provision_pct": yd["provision_pct"],
             }
         if prop_prov:
@@ -624,14 +634,16 @@ def compute_data(bookings):
                 provision_by_eigentuemer[eg][y] = {
                     "buchungen": 0, "miete_gesamt": 0.0,
                     "miete_vermittler": 0.0, "provision_gesamt": 0.0,
+                    "provision_laut_vertrag": 0.0,
                     "unterkuenfte": [],
-                    # Vertragssätze aus Excel (alle Sätze dieses Eigentümers)
                     "provision_saetze": sorted(_eg_rates.get(eg, set())),
                 }
             provision_by_eigentuemer[eg][y]["buchungen"] += py["buchungen"]
             provision_by_eigentuemer[eg][y]["miete_gesamt"] += py["miete_gesamt"]
             provision_by_eigentuemer[eg][y]["miete_vermittler"] += py["miete_vermittler"]
             provision_by_eigentuemer[eg][y]["provision_gesamt"] += py["provision_gesamt"]
+            if py.get("provision_laut_vertrag") is not None:
+                provision_by_eigentuemer[eg][y]["provision_laut_vertrag"] += py["provision_laut_vertrag"]
             provision_by_eigentuemer[eg][y]["unterkuenfte"].append(prop_name)
 
     return {
@@ -1021,19 +1033,20 @@ def generate_html(data):
         year_rows.sort(key=lambda x: -x[4]["provision_gesamt"])
 
         table_rows_html = ""
+        sum_detail_plv = 0.0
         for pname, ort, eg, pct_excel, py in year_rows:
+            plv = py.get("provision_laut_vertrag")
+            plv_str = format_euro(plv) if plv is not None else "–"
+            if plv: sum_detail_plv += plv
             table_rows_html += f'''
                     <tr>
                         <td>{pname}</td>
                         <td>{ort}</td>
                         <td style="font-size:12px;color:#555;">{eg}</td>
-                        <td class="num" style="color:#888;">{pct_excel}</td>
+                        <td class="num" style="color:#0066cc;font-weight:600;">{pct_excel}</td>
                         <td class="num">{py["buchungen"]}</td>
                         <td class="num">{format_euro(py["miete_gesamt"])}</td>
-                        <td class="num">{format_euro(py["miete_vermittler"])}</td>
-                        <td class="num">{format_euro(py["zusatz_vermittler"])}</td>
-                        <td class="num"><strong>{format_euro(py["provision_gesamt"])}</strong></td>
-                        <td class="num">{format_german_number(py["provision_pct"], 1)} %</td>
+                        <td class="num" style="color:#28a745;font-weight:600;">{plv_str}</td>
                     </tr>'''
 
         # Eigent\u00fcmer-Aggregation f\u00fcr dieses Jahr
@@ -1046,19 +1059,19 @@ def generate_html(data):
         eg_rows.sort(key=lambda x: -x[1]["provision_gesamt"])
 
         eg_table_html = ""
+        sum_plv = sum(ey.get("provision_laut_vertrag", 0) for _, ey in eg_rows)
         for eg_name, ey in eg_rows:
-            eg_pct = round(ey["miete_vermittler"] / ey["miete_gesamt"] * 100, 1) if ey["miete_gesamt"] > 0 else 0
             saetze = ey.get("provision_saetze", [])
             saetze_str = " / ".join(saetze) if saetze else "–"
+            plv = ey.get("provision_laut_vertrag", 0)
+            plv_str = format_euro(plv) if plv else "–"
             eg_table_html += f'''
                     <tr>
                         <td>{eg_name}</td>
                         <td class="num" style="color:#0066cc;font-weight:600;">{saetze_str}</td>
                         <td class="num">{ey["buchungen"]}</td>
                         <td class="num">{format_euro(ey["miete_gesamt"])}</td>
-                        <td class="num">{format_euro(ey["miete_vermittler"])}</td>
-                        <td class="num"><strong>{format_euro(ey["provision_gesamt"])}</strong></td>
-                        <td class="num" style="color:#888;">{format_german_number(eg_pct, 1)} %</td>
+                        <td class="num" style="color:#28a745;font-weight:600;">{plv_str}</td>
                     </tr>'''
 
         sum_pct = round(sum_mv / sum_mg * 100, 1) if sum_mg > 0 else 0
@@ -1071,15 +1084,15 @@ def generate_html(data):
                  style="cursor:pointer;background:{header_bg};padding:12px 18px;display:flex;align-items:center;justify-content:space-between;user-select:none;">
                 <span style="font-size:17px;font-weight:700;color:{header_color};">{y}</span>
                 <div style="display:flex;align-items:center;gap:24px;">
-                    <span style="font-size:13px;color:{header_color};opacity:0.9;">Provision: {format_euro(mv_total)} &nbsp;|&nbsp; Satz: {format_german_number(prov_rate_avg, 1)} %</span>
+                    <span style="font-size:13px;color:{header_color};opacity:0.9;">Provision laut Vertrag: {format_euro(sum_plv)}</span>
                     <span id="{arrow_id}" style="font-size:14px;color:{header_color};">{arrow}</span>
                 </div>
             </div>
             <div id="{section_id}" style="display:{collapsed};padding:16px;">
                 <div class="prop-detail-grid" style="margin-bottom:16px;">
-                    <div class="prop-kpi"><div class="pk-label">Provision Ostseeliebe</div><div class="pk-value green">{format_euro(mv_total)}</div></div>
+                    <div class="prop-kpi"><div class="pk-label">Provision laut Vertrag</div><div class="pk-value green">{format_euro(sum_plv)}</div></div>
                     <div class="prop-kpi"><div class="pk-label">Miete gesamt</div><div class="pk-value">{format_euro(mg_total)}</div></div>
-                    <div class="prop-kpi"><div class="pk-label">\u00d8 Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
+                    <div class="prop-kpi"><div class="pk-label">Provision aus Contao (Info)</div><div class="pk-value" style="color:#888;">{format_euro(mv_total)}</div></div>
                     <div class="prop-kpi"><div class="pk-label">Zusatzk. Vermittler (Info)</div><div class="pk-value" style="color:#888">{format_euro(zk_verm_year)}</div></div>
                 </div>
 
@@ -1092,11 +1105,10 @@ def generate_html(data):
                     <table class="prov-table">
                         <thead><tr>
                             <th>Eigent\u00fcmer</th>
-                            <th class="num">Provisionssatz (Vertrag)</th>
-                            <th class="num">Buchungen</th><th class="num">Miete ges.</th>
-                            <th class="num">Miete Verm.</th>
-                            <th class="num">Provision Ostseeliebe</th>
-                            <th class="num">Satz (ist)</th>
+                            <th class="num">Satz (Vertrag)</th>
+                            <th class="num">Buchungen</th>
+                            <th class="num">Miete gesamt</th>
+                            <th class="num">Provision laut Vertrag</th>
                         </tr></thead>
                         <tbody>
                             {eg_table_html}
@@ -1105,9 +1117,7 @@ def generate_html(data):
                                 <td></td>
                                 <td></td>
                                 <td class="num"><strong>{format_euro(sum_mg)}</strong></td>
-                                <td class="num"><strong>{format_euro(sum_mv)}</strong></td>
-                                <td class="num"><strong>{format_euro(sum_pg)}</strong></td>
-                                <td class="num"><strong>{format_german_number(sum_pct, 1)} %</strong></td>
+                                <td class="num"><strong>{format_euro(sum_plv)}</strong></td>
                             </tr>
                         </tbody>
                     </table>
@@ -1123,21 +1133,20 @@ def generate_html(data):
                     <table class="prov-table">
                         <thead><tr>
                             <th>Unterkunft</th><th>Ort</th>
-                            <th>Eigent\u00fcmer</th><th class="num">Satz (Vertrag)</th>
-                            <th class="num">Buchungen</th><th class="num">Miete ges.</th>
-                            <th class="num">Miete Verm.</th><th class="num">Zusatzk. Verm.</th>
-                            <th class="num">Provision ges.</th><th class="num">Satz (ist)</th>
+                            <th>Eigent\u00fcmer</th>
+                            <th class="num">Satz (Vertrag)</th>
+                            <th class="num">Buchungen</th>
+                            <th class="num">Miete gesamt</th>
+                            <th class="num">Provision laut Vertrag</th>
                         </tr></thead>
                         <tbody>
                             {table_rows_html}
                             <tr class="prov-total">
-                                <td colspan="4"><strong>SUMME {y}</strong></td>
+                                <td colspan="3"><strong>SUMME {y}</strong></td>
+                                <td></td>
                                 <td></td>
                                 <td class="num"><strong>{format_euro(sum_mg)}</strong></td>
-                                <td class="num"><strong>{format_euro(sum_mv)}</strong></td>
-                                <td class="num"><strong>{format_euro(sum_zv)}</strong></td>
-                                <td class="num"><strong>{format_euro(sum_pg)}</strong></td>
-                                <td class="num"><strong>{format_german_number(sum_pct, 1)} %</strong></td>
+                                <td class="num"><strong>{format_euro(sum_detail_plv)}</strong></td>
                             </tr>
                         </tbody>
                     </table>
