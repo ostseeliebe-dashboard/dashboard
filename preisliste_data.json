@@ -2,19 +2,7 @@
   "price_lists": [
     {
       "id": "163",
-      "name": "A01 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 60,
-        "Strandzeit I": 100,
-        "Weihnachten": 75,
-        "Winter": 59,
-        "Frühling I": 75,
-        "Frühling II": 75,
-        "Frühsommer": 85,
-        "Kranichzeit": 95,
-        "Ostern": 75,
-        "Silvester - Neujahr": 120
-      },
+      "name": "Preisliste 163",
       "accommodations": [
         {
           "nr": "245",
@@ -111,46 +99,46 @@
           "name": "Velo 4",
           "parking": "Büro"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 60.0,
+        "Strandzeit I": 100.0,
+        "Weihnachten": 75.0,
+        "Winter": 59.0,
+        "Frühling I": 75.0,
+        "Frühling II": 75.0,
+        "Frühsommer": 85.0,
+        "Kranichzeit": 95.0,
+        "Ostern": 75.0,
+        "Silvester - Neujahr": 120.0
+      }
     },
     {
       "id": "198",
-      "name": "A01 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 60,
-        "Strandzeit I": 100,
-        "Weihnachten": 75,
-        "Winter": 59,
-        "Frühling I": 75,
-        "Frühling II": 75,
-        "Frühsommer": 85,
-        "Kranichzeit": 95,
-        "Ostern": 75,
-        "Silvester - Neujahr": 120
-      },
+      "name": "Preisliste 198",
       "accommodations": [
         {
           "nr": "135",
           "name": "Lütten Pohnert",
           "parking": "Büro"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 60.0,
+        "Strandzeit I": 100.0,
+        "Weihnachten": 75.0,
+        "Winter": 59.0,
+        "Frühling I": 75.0,
+        "Frühling II": 75.0,
+        "Frühsommer": 85.0,
+        "Kranichzeit": 95.0,
+        "Ostern": 75.0,
+        "Silvester - Neujahr": 120.0
+      }
     },
     {
       "id": "117",
-      "name": "A02 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 60,
-        "Strandzeit I": 120,
-        "Weihnachten": 75,
-        "Winter": 59,
-        "Frühling I": 75,
-        "Frühling II": 85,
-        "Frühsommer": 95,
-        "Kranichzeit": 95,
-        "Ostern": 75,
-        "Silvester - Neujahr": 140
-      },
+      "name": "Preisliste 117",
       "accommodations": [
         {
           "nr": "219",
@@ -337,23 +325,23 @@
           "name": "Dat Lütte Glück",
           "parking": "2525"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 60.0,
+        "Strandzeit I": 120.0,
+        "Weihnachten": 75.0,
+        "Winter": 59.0,
+        "Frühling I": 75.0,
+        "Frühling II": 85.0,
+        "Frühsommer": 95.0,
+        "Kranichzeit": 95.0,
+        "Ostern": 75.0,
+        "Silvester - Neujahr": 140.0
+      }
     },
     {
       "id": "98",
-      "name": "A03 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 75,
-        "Strandzeit I": 135,
-        "Weihnachten": 85,
-        "Winter": 69,
-        "Frühling I": 90,
-        "Frühling II": 105,
-        "Frühsommer": 115,
-        "Kranichzeit": 110,
-        "Ostern": 100,
-        "Silvester - Neujahr": 155
-      },
+      "name": "Preisliste 98",
       "accommodations": [
         {
           "nr": "233",
@@ -432,7 +420,7 @@
         },
         {
           "nr": "226",
-          "name": "Hafenkoje Unterdeck",
+          "name": "Hafenkoje  Unterdeck",
           "parking": "0903"
         },
         {
@@ -517,8 +505,8 @@
         },
         {
           "nr": "76",
-          "name": "7A/06-Düne 7",
-          "parking": "P Whg. 10/Büro"
+          "name": "7A/06",
+          "parking": "Düne 7/P Whg. 10/Büro"
         },
         {
           "nr": "96",
@@ -640,63 +628,63 @@
           "name": "Stranddistel",
           "parking": "P4/ 1506"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 75.0,
+        "Strandzeit I": 135.0,
+        "Weihnachten": 85.0,
+        "Winter": 69.0,
+        "Frühling I": 90.0,
+        "Frühling II": 105.0,
+        "Frühsommer": 115.0,
+        "Kranichzeit": 110.0,
+        "Ostern": 100.0,
+        "Silvester - Neujahr": 155.0
+      }
     },
     {
       "id": "197",
-      "name": "A03 - 2 Personen",
+      "name": "Preisliste 197",
+      "accommodations": [],
       "season_prices": {
-        "Spätherbst": 65,
-        "Strandzeit I": 125,
-        "Weihnachten": 80,
-        "Winter": 65,
-        "Frühling I": 75,
-        "Frühling II": 85,
-        "Frühsommer": 95,
-        "Kranichzeit": 95,
-        "Ostern": 75,
-        "Silvester - Neujahr": 140
-      },
-      "accommodations": []
+        "Spätherbst": 65.0,
+        "Strandzeit I": 125.0,
+        "Weihnachten": 80.0,
+        "Winter": 65.0,
+        "Frühling I": 75.0,
+        "Frühling II": 85.0,
+        "Frühsommer": 95.0,
+        "Kranichzeit": 95.0,
+        "Ostern": 75.0,
+        "Silvester - Neujahr": 140.0
+      }
     },
     {
       "id": "177",
-      "name": "A04 - 4 Personen",
-      "season_prices": {
-        "Spätherbst": 85,
-        "Strandzeit I": 140,
-        "Weihnachten": 105,
-        "Winter": 79,
-        "Frühling I": 105,
-        "Frühling II": 110,
-        "Frühsommer": 125,
-        "Kranichzeit": 130,
-        "Ostern": 110,
-        "Silvester - Neujahr": 160
-      },
+      "name": "Preisliste 177",
       "accommodations": [
         {
           "nr": "248",
           "name": "Sonnenzauber",
           "parking": "1609"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 85.0,
+        "Strandzeit I": 140.0,
+        "Weihnachten": 105.0,
+        "Winter": 79.0,
+        "Frühling I": 105.0,
+        "Frühling II": 110.0,
+        "Frühsommer": 125.0,
+        "Kranichzeit": 130.0,
+        "Ostern": 110.0,
+        "Silvester - Neujahr": 160.0
+      }
     },
     {
       "id": "119",
-      "name": "A05 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 75,
-        "Strandzeit I": 145,
-        "Weihnachten": 90,
-        "Winter": 75,
-        "Frühling I": 90,
-        "Frühling II": 110,
-        "Frühsommer": 120,
-        "Kranichzeit": 125,
-        "Ostern": 110,
-        "Silvester - Neujahr": 165
-      },
+      "name": "Preisliste 119",
       "accommodations": [
         {
           "nr": "100",
@@ -749,27 +737,27 @@
           "parking": "2105"
         },
         {
-          "nr": "257",
-          "name": "Ferienglück",
-          "parking": "0815"
+          "nr": "",
+          "name": "257-Ferienglück /0815",
+          "parking": ""
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 75.0,
+        "Strandzeit I": 145.0,
+        "Weihnachten": 90.0,
+        "Winter": 75.0,
+        "Frühling I": 90.0,
+        "Frühling II": 110.0,
+        "Frühsommer": 120.0,
+        "Kranichzeit": 125.0,
+        "Ostern": 110.0,
+        "Silvester - Neujahr": 165.0
+      }
     },
     {
       "id": "104",
-      "name": "A06 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 75,
-        "Strandzeit I": 160,
-        "Weihnachten": 90,
-        "Winter": 75,
-        "Frühling I": 95,
-        "Frühling II": 120,
-        "Frühsommer": 130,
-        "Kranichzeit": 130,
-        "Ostern": 120,
-        "Silvester - Neujahr": 190
-      },
+      "name": "Preisliste 104",
       "accommodations": [
         {
           "nr": "185",
@@ -886,23 +874,23 @@
           "name": "Kraanstiet 3",
           "parking": "Nuki"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 75.0,
+        "Strandzeit I": 160.0,
+        "Weihnachten": 90.0,
+        "Winter": 75.0,
+        "Frühling I": 95.0,
+        "Frühling II": 120.0,
+        "Frühsommer": 130.0,
+        "Kranichzeit": 130.0,
+        "Ostern": 120.0,
+        "Silvester - Neujahr": 190.0
+      }
     },
     {
       "id": "213",
-      "name": "A06 - 4 Personen",
-      "season_prices": {
-        "Spätherbst": 75,
-        "Strandzeit I": 160,
-        "Weihnachten": 90,
-        "Winter": 75,
-        "Frühling I": 95,
-        "Frühling II": 120,
-        "Frühsommer": 130,
-        "Kranichzeit": 130,
-        "Ostern": 120,
-        "Silvester - Neujahr": 190
-      },
+      "name": "Preisliste 213",
       "accommodations": [
         {
           "nr": "105",
@@ -924,23 +912,23 @@
           "name": "Steuerbord",
           "parking": "3006"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 75.0,
+        "Strandzeit I": 160.0,
+        "Weihnachten": 90.0,
+        "Winter": 75.0,
+        "Frühling I": 95.0,
+        "Frühling II": 120.0,
+        "Frühsommer": 130.0,
+        "Kranichzeit": 130.0,
+        "Ostern": 120.0,
+        "Silvester - Neujahr": 190.0
+      }
     },
     {
       "id": "175",
-      "name": "A07 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 99,
-        "Strandzeit I": 169,
-        "Weihnachten": 125,
-        "Winter": 99,
-        "Frühling I": 115,
-        "Frühling II": 135,
-        "Frühsommer": 150,
-        "Kranichzeit": 135,
-        "Ostern": 125,
-        "Silvester - Neujahr": 180
-      },
+      "name": "Preisliste 175",
       "accommodations": [
         {
           "nr": "243",
@@ -977,23 +965,23 @@
           "name": "RC - Charlotte",
           "parking": "Büro"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 99.0,
+        "Strandzeit I": 169.0,
+        "Weihnachten": 125.0,
+        "Winter": 99.0,
+        "Frühling I": 115.0,
+        "Frühling II": 135.0,
+        "Frühsommer": 150.0,
+        "Kranichzeit": 135.0,
+        "Ostern": 125.0,
+        "Silvester - Neujahr": 180.0
+      }
     },
     {
       "id": "176",
-      "name": "A08 - 4 Personen",
-      "season_prices": {
-        "Spätherbst": 99,
-        "Strandzeit I": 169,
-        "Weihnachten": 125,
-        "Winter": 99,
-        "Frühling I": 115,
-        "Frühling II": 135,
-        "Frühsommer": 150,
-        "Kranichzeit": 135,
-        "Ostern": 125,
-        "Silvester - Neujahr": 180
-      },
+      "name": "Preisliste 176",
       "accommodations": [
         {
           "nr": "242",
@@ -1010,23 +998,23 @@
           "name": "Boddenblick 9",
           "parking": "4411"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 99.0,
+        "Strandzeit I": 169.0,
+        "Weihnachten": 125.0,
+        "Winter": 99.0,
+        "Frühling I": 115.0,
+        "Frühling II": 135.0,
+        "Frühsommer": 150.0,
+        "Kranichzeit": 135.0,
+        "Ostern": 125.0,
+        "Silvester - Neujahr": 180.0
+      }
     },
     {
       "id": "157",
-      "name": "A09 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 100,
-        "Strandzeit I": 195,
-        "Weihnachten": 110,
-        "Winter": 85,
-        "Frühling I": 120,
-        "Frühling II": 135,
-        "Frühsommer": 150,
-        "Kranichzeit": 145,
-        "Ostern": 125,
-        "Silvester - Neujahr": 225
-      },
+      "name": "Preisliste 157",
       "accommodations": [
         {
           "nr": "196",
@@ -1048,23 +1036,23 @@
           "name": "Windland",
           "parking": "5511"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 100.0,
+        "Strandzeit I": 195.0,
+        "Weihnachten": 110.0,
+        "Winter": 85.0,
+        "Frühling I": 120.0,
+        "Frühling II": 135.0,
+        "Frühsommer": 150.0,
+        "Kranichzeit": 145.0,
+        "Ostern": 125.0,
+        "Silvester - Neujahr": 225.0
+      }
     },
     {
       "id": "162",
-      "name": "A10 - 4 Personen",
-      "season_prices": {
-        "Spätherbst": 99,
-        "Strandzeit I": 195,
-        "Weihnachten": 140,
-        "Winter": 79,
-        "Frühling I": 120,
-        "Frühling II": 135,
-        "Frühsommer": 150,
-        "Kranichzeit": 145,
-        "Ostern": 125,
-        "Silvester - Neujahr": 225
-      },
+      "name": "Preisliste 162",
       "accommodations": [
         {
           "nr": "117",
@@ -1117,32 +1105,32 @@
           "parking": "2772"
         },
         {
-          "nr": "259",
-          "name": "RC Strandhafer",
+          "nr": "259- RC",
+          "name": "Strandhafer",
           "parking": "1930"
         },
         {
-          "nr": "258",
-          "name": "RC Strandkaten",
+          "nr": "258-RC",
+          "name": "Strandkaten",
           "parking": "1927"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 99.0,
+        "Strandzeit I": 195.0,
+        "Weihnachten": 140.0,
+        "Winter": 79.0,
+        "Frühling I": 120.0,
+        "Frühling II": 135.0,
+        "Frühsommer": 150.0,
+        "Kranichzeit": 145.0,
+        "Ostern": 125.0,
+        "Silvester - Neujahr": 225.0
+      }
     },
     {
       "id": "114",
-      "name": "A11 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 110,
-        "Strandzeit I": 210,
-        "Weihnachten": 140,
-        "Winter": 99,
-        "Frühling I": 130,
-        "Frühling II": 135,
-        "Frühsommer": 150,
-        "Kranichzeit": 160,
-        "Ostern": 130,
-        "Silvester - Neujahr": 230
-      },
+      "name": "Preisliste 114",
       "accommodations": [
         {
           "nr": "129",
@@ -1204,46 +1192,46 @@
           "name": "Schifferkaten",
           "parking": "2801"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 110.0,
+        "Strandzeit I": 210.0,
+        "Weihnachten": 140.0,
+        "Winter": 99.0,
+        "Frühling I": 130.0,
+        "Frühling II": 135.0,
+        "Frühsommer": 150.0,
+        "Kranichzeit": 160.0,
+        "Ostern": 130.0,
+        "Silvester - Neujahr": 230.0
+      }
     },
     {
       "id": "191",
-      "name": "A12 - 4 Personen",
-      "season_prices": {
-        "Spätherbst": 115,
-        "Strandzeit I": 230,
-        "Weihnachten": 160,
-        "Winter": 115,
-        "Frühling I": 150,
-        "Frühling II": 150,
-        "Frühsommer": 165,
-        "Kranichzeit": 160,
-        "Ostern": 150,
-        "Silvester - Neujahr": 235
-      },
+      "name": "Preisliste 191",
       "accommodations": [
         {
           "nr": "289",
           "name": "Witzki",
           "parking": "2508"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 115.0,
+        "Strandzeit I": 230.0,
+        "Weihnachten": 160.0,
+        "Winter": 115.0,
+        "Frühling I": 150.0,
+        "Frühling II": 150.0,
+        "Frühsommer": 165.0,
+        "Kranichzeit": 160.0,
+        "Ostern": 150.0,
+        "Silvester - Neujahr": 235.0
+      }
     },
     {
       "id": "111",
-      "name": "A13 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 110,
-        "Strandzeit I": 235,
-        "Weihnachten": 150,
-        "Winter": 99,
-        "Frühling I": 135,
-        "Frühling II": 150,
-        "Frühsommer": 165,
-        "Kranichzeit": 170,
-        "Ostern": 135,
-        "Silvester - Neujahr": 289
-      },
+      "name": "Preisliste 111",
       "accommodations": [
         {
           "nr": "113",
@@ -1310,23 +1298,23 @@
           "name": "Darss-Duett 2",
           "parking": "1812"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 110.0,
+        "Strandzeit I": 235.0,
+        "Weihnachten": 150.0,
+        "Winter": 99.0,
+        "Frühling I": 135.0,
+        "Frühling II": 150.0,
+        "Frühsommer": 165.0,
+        "Kranichzeit": 170.0,
+        "Ostern": 135.0,
+        "Silvester - Neujahr": 289.0
+      }
     },
     {
       "id": "101",
-      "name": "A14 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 129,
-        "Strandzeit I": 269,
-        "Weihnachten": 199,
-        "Winter": 129,
-        "Frühling I": 149,
-        "Frühling II": 169,
-        "Frühsommer": 219,
-        "Kranichzeit": 199,
-        "Ostern": 149,
-        "Silvester - Neujahr": 289
-      },
+      "name": "Preisliste 101",
       "accommodations": [
         {
           "nr": "218",
@@ -1338,69 +1326,69 @@
           "name": "Traumzeit 2",
           "parking": "NUKI"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 129.0,
+        "Strandzeit I": 269.0,
+        "Weihnachten": 199.0,
+        "Winter": 129.0,
+        "Frühling I": 149.0,
+        "Frühling II": 169.0,
+        "Frühsommer": 219.0,
+        "Kranichzeit": 199.0,
+        "Ostern": 149.0,
+        "Silvester - Neujahr": 289.0
+      }
     },
     {
       "id": "140",
-      "name": "A15 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 160,
-        "Strandzeit I": 300,
-        "Weihnachten": 210,
-        "Winter": 160,
-        "Frühling I": 195,
-        "Frühling II": 255,
-        "Frühsommer": 270,
-        "Kranichzeit": 235,
-        "Ostern": 195,
-        "Silvester - Neujahr": 320
-      },
+      "name": "Preisliste 140",
       "accommodations": [
         {
           "nr": "110",
           "name": "Hus oevern diek",
           "parking": "0903"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 160.0,
+        "Strandzeit I": 300.0,
+        "Weihnachten": 210.0,
+        "Winter": 160.0,
+        "Frühling I": 195.0,
+        "Frühling II": 255.0,
+        "Frühsommer": 270.0,
+        "Kranichzeit": 235.0,
+        "Ostern": 195.0,
+        "Silvester - Neujahr": 320.0
+      }
     },
     {
       "id": "199",
-      "name": "A16 - 2 Personen",
-      "season_prices": {
-        "Spätherbst": 75,
-        "Strandzeit I": 160,
-        "Weihnachten": 90,
-        "Winter": 75,
-        "Frühling I": 120,
-        "Frühling II": 130,
-        "Frühsommer": 130,
-        "Kranichzeit": 130,
-        "Ostern": 120,
-        "Silvester - Neujahr": 190
-      },
+      "name": "Preisliste 199",
       "accommodations": [
         {
           "nr": "200",
           "name": "Gracieuse Whg. 4",
           "parking": "P 14/ Büro"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 75.0,
+        "Strandzeit I": 160.0,
+        "Weihnachten": 90.0,
+        "Winter": 75.0,
+        "Frühling I": 120.0,
+        "Frühling II": 130.0,
+        "Frühsommer": 130.0,
+        "Kranichzeit": 130.0,
+        "Ostern": 120.0,
+        "Silvester - Neujahr": 190.0
+      }
     },
     {
       "id": "220",
-      "name": "B1 - Basic",
-      "season_prices": {
-        "Spätherbst": 0,
-        "Strandzeit I": 0,
-        "Weihnachten": 0,
-        "Winter": 0,
-        "Frühling I": 65,
-        "Frühling II": 75,
-        "Frühsommer": 78,
-        "Kranichzeit": 85,
-        "Ostern": 65,
-        "Silvester - Neujahr": 115
-      },
+      "name": "Preisliste 220",
       "accommodations": [
         {
           "nr": "30",
@@ -1447,23 +1435,23 @@
           "name": "App. 1.5",
           "parking": "P1.5/ 1329"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 0.0,
+        "Strandzeit I": 0.0,
+        "Weihnachten": 0.0,
+        "Winter": 0.0,
+        "Frühling I": 65.0,
+        "Frühling II": 75.0,
+        "Frühsommer": 78.0,
+        "Kranichzeit": 85.0,
+        "Ostern": 65.0,
+        "Silvester - Neujahr": 115.0
+      }
     },
     {
       "id": "221",
-      "name": "B2 - Komfort",
-      "season_prices": {
-        "Spätherbst": 0,
-        "Strandzeit I": 0,
-        "Weihnachten": 0,
-        "Winter": 0,
-        "Frühling I": 80,
-        "Frühling II": 85,
-        "Frühsommer": 95,
-        "Kranichzeit": 105,
-        "Ostern": 80,
-        "Silvester - Neujahr": 130
-      },
+      "name": "Preisliste 221",
       "accommodations": [
         {
           "nr": "42",
@@ -1485,23 +1473,23 @@
           "name": "App. 3.7",
           "parking": "P3.7/ 2436"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 0.0,
+        "Strandzeit I": 0.0,
+        "Weihnachten": 0.0,
+        "Winter": 0.0,
+        "Frühling I": 80.0,
+        "Frühling II": 85.0,
+        "Frühsommer": 95.0,
+        "Kranichzeit": 105.0,
+        "Ostern": 80.0,
+        "Silvester - Neujahr": 130.0
+      }
     },
     {
       "id": "222",
-      "name": "B3 - Premium",
-      "season_prices": {
-        "Spätherbst": 0,
-        "Strandzeit I": 0,
-        "Weihnachten": 0,
-        "Winter": 0,
-        "Frühling I": 80,
-        "Frühling II": 88,
-        "Frühsommer": 98,
-        "Kranichzeit": 108,
-        "Ostern": 80,
-        "Silvester - Neujahr": 140
-      },
+      "name": "Preisliste 222",
       "accommodations": [
         {
           "nr": "38",
@@ -1538,23 +1526,23 @@
           "name": "App. 2.3",
           "parking": "P2.3/ 7148"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 0.0,
+        "Strandzeit I": 0.0,
+        "Weihnachten": 0.0,
+        "Winter": 0.0,
+        "Frühling I": 80.0,
+        "Frühling II": 88.0,
+        "Frühsommer": 98.0,
+        "Kranichzeit": 108.0,
+        "Ostern": 80.0,
+        "Silvester - Neujahr": 140.0
+      }
     },
     {
       "id": "223",
-      "name": "B4 - Exklusiv",
-      "season_prices": {
-        "Spätherbst": 0,
-        "Strandzeit I": 0,
-        "Weihnachten": 0,
-        "Winter": 0,
-        "Frühling I": 95,
-        "Frühling II": 108,
-        "Frühsommer": 118,
-        "Kranichzeit": 128,
-        "Ostern": 95,
-        "Silvester - Neujahr": 163
-      },
+      "name": "Preisliste 223",
       "accommodations": [
         {
           "nr": "46",
@@ -1566,9 +1554,21 @@
           "name": "App. 7.1",
           "parking": "P7.1/ 0159"
         }
-      ]
+      ],
+      "season_prices": {
+        "Spätherbst": 0.0,
+        "Strandzeit I": 0.0,
+        "Weihnachten": 0.0,
+        "Winter": 0.0,
+        "Frühling I": 95.0,
+        "Frühling II": 108.0,
+        "Frühsommer": 118.0,
+        "Kranichzeit": 128.0,
+        "Ostern": 95.0,
+        "Silvester - Neujahr": 163.0
+      }
     }
   ],
   "year": 2026,
-  "fetched_at": "2026-05-05T03:59:55.735009"
+  "fetched_at": "2026-05-05T06:37:03.942507"
 }
