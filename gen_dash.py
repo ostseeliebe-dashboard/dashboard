@@ -440,11 +440,27 @@ def compute_data(bookings):
         channels_by_year[y] = {"total": year_total, "channels": grouped,
                                 "portal_provision": portal_prov_total}
 
-    # --- Locations ---
-    ort_counts = defaultdict(int)
+    # --- Locations – Umsatz + Buchungen pro Jahr ---
+    ort_data = defaultdict(lambda: {"buchungen": defaultdict(int), "umsatz": defaultdict(float)})
     for b in bookings:
-        ort_counts[b["ort"]] += 1
-    orte_sorted = sorted(ort_counts.items(), key=lambda x: -x[1])
+        ort = b["ort"]
+        y = b["anreise"].year
+        ort_data[ort]["buchungen"][y] += 1
+        ort_data[ort]["umsatz"][y] += b["reisepreis"]
+
+    # orte_sorted: Liste mit vollständigen Jahresdaten
+    orte_sorted = []
+    for ort, od in ort_data.items():
+        total_umsatz = sum(od["umsatz"].values())
+        total_buch   = sum(od["buchungen"].values())
+        orte_sorted.append({
+            "ort": ort,
+            "total_umsatz": total_umsatz,
+            "total_buchungen": total_buch,
+            "umsatz_per_year": dict(od["umsatz"]),
+            "buchungen_per_year": dict(od["buchungen"]),
+        })
+    orte_sorted.sort(key=lambda x: -x["total_umsatz"])
 
     # --- Zusatzkosten aggregation ---
     # Structure: {category: {year: {vermittler, eigentuemer, count}}}
@@ -666,6 +682,134 @@ def compute_data(bookings):
         "prop_profiles": prop_profiles,
         "haus_year_data": haus_year_data,
     }
+
+
+def _build_orte_tab(orte, years, current_year):
+    """Baut den Orte-Tab mit Umsatz pro Jahr, %-Anteil und Wachstum."""
+    # Nur Hauptjahre (ab 2020), aktuelles Jahr vorne
+    MAIN_FROM = 2020
+    display_years = sorted(
+        [y for y in years if y >= MAIN_FROM],
+        key=lambda y: (0 if y == current_year else 1, -y)
+    )
+
+    # Jahrestotale für %-Berechnung
+    year_totals = {}
+    for y in display_years:
+        year_totals[y] = sum(o["umsatz_per_year"].get(y, 0) for o in orte)
+
+    # Tabellenkopf
+    year_headers = ""
+    for y in display_years:
+        is_cur = y == current_year
+        bg = "#0066cc" if is_cur else "#4a90d9"
+        year_headers += (
+            f'<th class="num" colspan="2" style="background:{bg};color:#fff;'
+            f'font-weight:700;text-align:center;">'
+            f'{"▶ " if is_cur else ""}{y}</th>'
+            f'<th class="num" style="background:{"#1a7de0" if is_cur else "#5fa3e8"};'
+            f'color:#fff;font-size:11px;font-weight:500;">Wachstum</th>'
+        )
+
+    sub_headers = ""
+    for y in display_years:
+        is_cur = y == current_year
+        bg2 = "#1a7de0" if is_cur else "#5fa3e8"
+        sub_headers += (
+            f'<th class="num" style="background:{bg2};color:#fff;font-size:11px;font-weight:500;">Umsatz</th>'
+            f'<th class="num" style="background:{bg2};color:#fff;font-size:11px;font-weight:500;">Anteil</th>'
+            f'<th class="num" style="background:{bg2};color:#fff;font-size:11px;font-weight:500;">vs. Vorjahr</th>'
+        )
+
+    # Zeilen – nach aktuellem Jahr sortiert
+    orte_sorted_cur = sorted(orte, key=lambda o: -o["umsatz_per_year"].get(current_year, 0))
+
+    rows_html = ""
+    for o in orte_sorted_cur:
+        cells = ""
+        for idx, y in enumerate(display_years):
+            umsatz = o["umsatz_per_year"].get(y, 0)
+            total_y = year_totals.get(y, 1) or 1
+            anteil = umsatz / total_y * 100 if umsatz else 0
+
+            # Wachstum vs. Vorjahr
+            prev_y = display_years[idx + 1] if idx + 1 < len(display_years) else None
+            if prev_y:
+                prev = o["umsatz_per_year"].get(prev_y, 0)
+                if prev > 0:
+                    wachstum = (umsatz - prev) / prev * 100
+                    if wachstum > 0:
+                        wstr = f'<span style="color:#28a745;font-weight:600">▲ {wachstum:+.1f}%</span>'
+                    elif wachstum < 0:
+                        wstr = f'<span style="color:#dc3545;font-weight:600">▼ {wachstum:.1f}%</span>'
+                    else:
+                        wstr = '<span style="color:#888">± 0%</span>'
+                elif umsatz > 0:
+                    wstr = '<span style="color:#28a745;font-size:11px">neu</span>'
+                else:
+                    wstr = '<span style="color:#ccc">–</span>'
+            else:
+                wstr = '<span style="color:#ccc">–</span>'
+
+            is_cur = y == current_year
+            bg_cell = "background:#f0f7ff;" if is_cur else ""
+            fw = "font-weight:600;" if is_cur else ""
+            umsatz_str = format_euro(umsatz) if umsatz else '<span style="color:#ccc">–</span>'
+            anteil_str = f'{anteil:.1f} %' if umsatz else '<span style="color:#ccc">–</span>'
+            cells += (
+                f'<td class="num" style="{bg_cell}{fw}">{umsatz_str}</td>'
+                f'<td class="num" style="{bg_cell}color:#666;font-size:12px;">{anteil_str}</td>'
+                f'<td class="num" style="{bg_cell}font-size:12px;">{wstr}</td>'
+            )
+
+        rows_html += f'<tr><td style="font-weight:500">{o["ort"]}</td>{cells}</tr>\n'
+
+    # Summenzeile
+    sum_cells = ""
+    for idx, y in enumerate(display_years):
+        total_y = year_totals.get(y, 0)
+        prev_y = display_years[idx + 1] if idx + 1 < len(display_years) else None
+        if prev_y and year_totals.get(prev_y, 0) > 0:
+            wachstum = (total_y - year_totals[prev_y]) / year_totals[prev_y] * 100
+            if wachstum > 0:
+                wstr = f'<span style="color:#28a745;font-weight:600">▲ {wachstum:+.1f}%</span>'
+            else:
+                wstr = f'<span style="color:#dc3545;font-weight:600">▼ {wachstum:.1f}%</span>'
+        else:
+            wstr = '<span style="color:#ccc">–</span>'
+        is_cur = y == current_year
+        bg_cell = "background:#e8f4ff;" if is_cur else "background:#f5f5f5;"
+        sum_cells += (
+            f'<td class="num" style="{bg_cell}font-weight:700">{format_euro(total_y)}</td>'
+            f'<td class="num" style="{bg_cell}font-weight:700">100 %</td>'
+            f'<td class="num" style="{bg_cell}font-size:12px;">{wstr}</td>'
+        )
+
+    return f'''<div class="chart-container">
+        <h3>&#127968; Umsatz nach Ort</h3>
+        <p style="color:#666;font-size:13px;margin-bottom:16px;">
+            Reisepreis je Ort und Jahr &mdash; sortiert nach Umsatz {current_year} &mdash;
+            Wachstum jeweils vs. Vorjahr.
+        </p>
+        <div style="overflow-x:auto;">
+        <table class="prov-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" style="vertical-align:bottom;">Ort</th>
+                    {year_headers}
+                </tr>
+                <tr>{sub_headers}</tr>
+            </thead>
+            <tbody>
+                {rows_html}
+                <tr class="prov-total">
+                    <td><strong>GESAMT</strong></td>
+                    {sum_cells}
+                </tr>
+            </tbody>
+        </table>
+        </div>
+    </div>'''
 
 
 def generate_html(data):
@@ -1400,8 +1544,8 @@ def generate_html(data):
     channel_chart_js = "\n".join(channel_chart_js_parts)
 
     # Locations bar
-    ort_labels = json.dumps([o[0] for o in orte])
-    ort_values = json.dumps([o[1] for o in orte])
+    ort_labels = json.dumps([o["ort"] for o in orte])
+    ort_values = json.dumps([o["total_buchungen"] for o in orte])
     ort_colors = json.dumps([colors[i % len(colors)] for i in range(len(orte))])
 
 
@@ -2035,12 +2179,7 @@ def generate_html(data):
         </div>'''
         ),
         "vertriebskanaele": channel_year_html,
-        "orte": (
-            '''<div class="chart-container">
-            <h3>Buchungen nach Ort</h3>
-            <div class="chart-wrapper bar-chart"><canvas id="ortChart"></canvas></div>
-        </div>'''
-        ),
+        "orte": _build_orte_tab(orte, years, current_year),
         "zusatzkosten": (
             '''<div class="chart-container">
             <h3>Alle Zusatzkosten \u2013 Detailtabelle</h3>
