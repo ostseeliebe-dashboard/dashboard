@@ -1537,13 +1537,13 @@ def generate_html(data):
 
     # Spaltenk\u00f6pfe: Gruppe pro Jahr (Umsatz | N\u00e4chte | Auslastung), dann Gesamt
     year_header_top = "".join(
-        f'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid #ddd;background:#f0f4fa">{y}</th>'
+        f'<th class="num" colspan="3" style="text-align:center;background:#0066cc;color:#fff;font-weight:700;font-size:13px;letter-spacing:0.5px">{y}</th>'
         for y in years
     )
     year_header_sub = "".join(
-        '<th class="num" style="font-size:11px;color:#666;font-weight:400">Umsatz</th>'
-        '<th class="num" style="font-size:11px;color:#666;font-weight:400">N\u00e4chte</th>'
-        '<th class="num" style="font-size:11px;color:#666;font-weight:400">Ausl.</th>'
+        '<th class="num" style="font-size:11px;color:#fff;font-weight:500;background:#1a7de0">Umsatz</th>'
+        '<th class="num" style="font-size:11px;color:#fff;font-weight:500;background:#1a7de0">N\u00e4chte</th>'
+        '<th class="num" style="font-size:11px;color:#fff;font-weight:500;background:#1a7de0">Ausl.</th>'
         for _ in years
     )
 
