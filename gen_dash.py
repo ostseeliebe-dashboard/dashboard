@@ -723,6 +723,7 @@ def compute_data(bookings):
         "profiles_by_year": profiles_by_year,
         "prop_profiles": prop_profiles,
         "haus_year_data": haus_year_data,
+        "bookings": bookings,
     }
 
 
@@ -851,6 +852,222 @@ def _build_orte_tab(orte, years, current_year):
             </tbody>
         </table>
         </div>
+    </div>'''
+
+
+def _build_planung_tab(bookings, current_year):
+    """Planungs-Tab: Reinigungsteam / Objektbetreuer / Management."""
+    from datetime import date, timedelta
+    today = date.today()
+
+    # Zukünftige Buchungen (Anreise >= heute)
+    future = [b for b in bookings
+              if hasattr(b["anreise"], "date") and b["anreise"].date() >= today]
+    future.sort(key=lambda b: b["anreise"])
+
+    # ── BEREICH 1: Reinigungsteam – Anreisen/Abreisen nächste 4 Wochen ──────
+    days_ahead = 28
+    from collections import defaultdict
+    arrivals  = defaultdict(list)
+    departures = defaultdict(list)
+    for b in future:
+        a_date = b["anreise"].date()
+        if a_date <= today + timedelta(days=days_ahead):
+            arrivals[a_date].append(b["unterkunft"])
+        dep_str = b.get("abreise_str", "")
+        try:
+            from datetime import datetime
+            d_date = datetime.strptime(dep_str, "%d.%m.%Y").date()
+            if today <= d_date <= today + timedelta(days=days_ahead):
+                departures[d_date].append(b["unterkunft"])
+        except Exception:
+            pass
+
+    cleaning_rows = ""
+    for offset in range(days_ahead + 1):
+        day = today + timedelta(days=offset)
+        arr = arrivals.get(day, [])
+        dep = departures.get(day, [])
+        if not arr and not dep:
+            continue
+        weekday = ["Mo","Di","Mi","Do","Fr","Sa","So"][day.weekday()]
+        is_we = day.weekday() >= 5
+        row_style = "background:#fff8e1;" if is_we else ""
+        arr_html = (", ".join(f"<span style='color:#2d7a2d'>{n}</span>" for n in arr)
+                    if arr else "<span style='color:#ccc'>–</span>")
+        dep_html = (", ".join(f"<span style='color:#cc3333'>{n}</span>" for n in dep)
+                    if dep else "<span style='color:#ccc'>–</span>")
+        cleaning_rows += (
+            f"<tr style='{row_style}'>"
+            f"<td style='white-space:nowrap;font-weight:500'>{weekday} {day.strftime('%d.%m.')}</td>"
+            f"<td class='num' style='color:#2d7a2d;font-weight:700'>{len(arr)}</td>"
+            f"<td style='font-size:12px'>{arr_html}</td>"
+            f"<td class='num' style='color:#cc3333;font-weight:700'>{len(dep)}</td>"
+            f"<td style='font-size:12px'>{dep_html}</td>"
+            f"</tr>"
+        )
+
+    # ── BEREICH 2: Objektbetreuer – Belegung pro Woche (nächste 52 Wochen) ──
+    # Alle Buchungen aufbauen: (anreise.date, abreise.date)
+    belegungs_buch = []
+    for b in bookings:
+        dep_str = b.get("abreise_str", "")
+        try:
+            from datetime import datetime
+            d_date = datetime.strptime(dep_str, "%d.%m.%Y").date()
+            belegungs_buch.append((b["anreise"].date(), d_date))
+        except Exception:
+            pass
+
+    # Wochendaten: Montag der aktuellen Woche als Startpunkt
+    week_start = today - timedelta(days=today.weekday())
+    occ_weeks = []
+    for w in range(52):
+        ws = week_start + timedelta(weeks=w)
+        we = ws + timedelta(days=6)
+        # Midpoint der Woche
+        mid = ws + timedelta(days=3)
+        count = sum(1 for (a, d) in belegungs_buch if a <= mid <= d)
+        occ_weeks.append((ws, count))
+
+    max_occ = max((c for _, c in occ_weeks), default=1) or 1
+    occ_rows = ""
+    for ws, cnt in occ_weeks:
+        pct = round(cnt / max_occ * 100)
+        month_label = ws.strftime("%b %Y")
+        bar_color = "#0066cc" if cnt < max_occ * 0.7 else ("#e67e00" if cnt < max_occ * 0.9 else "#cc3333")
+        occ_rows += (
+            f"<tr>"
+            f"<td style='white-space:nowrap'>{ws.strftime('%d.%m.')}–{(ws+timedelta(6)).strftime('%d.%m.')}</td>"
+            f"<td style='color:#666;font-size:12px'>{month_label}</td>"
+            f"<td class='num' style='font-weight:700;color:{bar_color}'>{cnt}</td>"
+            f"<td style='width:200px'>"
+            f"<div style='background:#eee;border-radius:4px;height:14px;'>"
+            f"<div style='width:{pct}%;background:{bar_color};height:14px;border-radius:4px'></div>"
+            f"</div></td>"
+            f"</tr>"
+        )
+
+    # ── BEREICH 3: Management – Umsatzvorschau Monate ───────────────────────
+    from collections import defaultdict as _dd
+    umsatz_future = _dd(float)
+    buchungen_future = _dd(int)
+    umsatz_prev = _dd(float)   # Vorjahr gleicher Monat
+    prev_year = current_year - 1
+    for b in bookings:
+        yr = b["anreise"].year
+        mo = b["anreise"].month
+        key = (yr, mo)
+        if yr >= current_year:
+            umsatz_future[key] += b["reisepreis"]
+            buchungen_future[key] += 1
+        if yr == prev_year:
+            umsatz_prev[(prev_year, mo)] += b["reisepreis"]
+
+    mgmt_rows = ""
+    import calendar as _cal
+    for mo in range(1, 13):
+        key_cur  = (current_year, mo)
+        key_prev = (prev_year, mo)
+        u_cur  = umsatz_future.get(key_cur, 0)
+        u_prev = umsatz_prev.get(key_prev, 0)
+        b_cur  = buchungen_future.get(key_cur, 0)
+        if u_prev > 0:
+            delta = round((u_cur - u_prev) / u_prev * 100, 1)
+            delta_html = (f"<span style='color:#2d7a2d'>▲ {delta:.1f}%</span>" if delta >= 0
+                          else f"<span style='color:#cc3333'>▼ {abs(delta):.1f}%</span>")
+        else:
+            delta_html = "<span style='color:#999'>–</span>"
+        month_name = _cal.month_abbr[mo]
+        is_past = (date(current_year, mo, 1) < today.replace(day=1))
+        row_style = "color:#aaa;" if is_past else ""
+        mgmt_rows += (
+            f"<tr style='{row_style}'>"
+            f"<td style='font-weight:500'>{month_name} {current_year}</td>"
+            f"<td class='num'>{b_cur if b_cur else '–'}</td>"
+            f"<td class='num' style='font-weight:700;color:#0066cc'>"
+            f"{'–' if not u_cur else '{:,.2f} €'.format(u_cur).replace(',','.')}</td>"
+            f"<td class='num' style='color:#888'>"
+            f"{'–' if not u_prev else '{:,.2f} €'.format(u_prev).replace(',','.')}</td>"
+            f"<td class='num'>{delta_html}</td>"
+            f"</tr>"
+        )
+    # 2027 Vorschau
+    for mo in range(1, 13):
+        key = (current_year + 1, mo)
+        u = umsatz_future.get(key, 0)
+        b_c = buchungen_future.get(key, 0)
+        if not u:
+            continue
+        month_name = _cal.month_abbr[mo]
+        mgmt_rows += (
+            f"<tr style='background:#f0f7ff'>"
+            f"<td style='font-weight:500;color:#0066cc'>{month_name} {current_year+1}</td>"
+            f"<td class='num'>{b_c}</td>"
+            f"<td class='num' style='font-weight:700;color:#0066cc'>"
+            f"{'{:,.2f} €'.format(u).replace(',','.')}</td>"
+            f"<td class='num' style='color:#888'>–</td><td>–</td>"
+            f"</tr>"
+        )
+
+    return f'''
+    <div class="chart-container">
+        <h3>&#129529; Reinigungsteam – Anreisen &amp; Abreisen (nächste 4 Wochen)</h3>
+        <p style="color:#666;font-size:13px;margin-bottom:12px;">
+            <span style="color:#2d7a2d">&#9650; Anreisen</span> &nbsp;
+            <span style="color:#cc3333">&#9660; Abreisen</span> &nbsp;|&nbsp;
+            Wochenenden hervorgehoben
+        </p>
+        <div style="overflow-x:auto">
+        <table class="prov-table">
+            <thead><tr>
+                <th>Datum</th>
+                <th class="num">Anreisen</th>
+                <th>Unterkünfte (Anreise)</th>
+                <th class="num">Abreisen</th>
+                <th>Unterkünfte (Abreise)</th>
+            </tr></thead>
+            <tbody>{cleaning_rows if cleaning_rows else
+                "<tr><td colspan='5' style='text-align:center;color:#999'>Keine Buchungen in den nächsten 28 Tagen</td></tr>"}</tbody>
+        </table></div>
+    </div>
+
+    <div class="chart-container">
+        <h3>&#128205; Objektbetreuer – Belegung je Woche (nächste 52 Wochen)</h3>
+        <p style="color:#666;font-size:13px;margin-bottom:12px;">
+            Gleichzeitig belegte Unterkünfte – Mittwoch der jeweiligen Woche als Stichtag.
+            <span style="color:#cc3333">&#9632;</span> Spitzenlast &nbsp;
+            <span style="color:#e67e00">&#9632;</span> Hoch &nbsp;
+            <span style="color:#0066cc">&#9632;</span> Normal
+        </p>
+        <div style="overflow-x:auto">
+        <table class="prov-table">
+            <thead><tr>
+                <th>Woche</th><th>Monat</th>
+                <th class="num">Belegt</th>
+                <th style="width:200px">Auslastung</th>
+            </tr></thead>
+            <tbody>{occ_rows}</tbody>
+        </table></div>
+    </div>
+
+    <div class="chart-container">
+        <h3>&#128200; Management – Umsatzvorschau (bereits gebuchte Buchungen)</h3>
+        <p style="color:#666;font-size:13px;margin-bottom:12px;">
+            Reisepreis-Summe der bereits eingebuchten Buchungen je Monat.
+            Vergangene Monate grau. Blau = {current_year+1}.
+        </p>
+        <div style="overflow-x:auto">
+        <table class="prov-table">
+            <thead><tr>
+                <th>Monat</th>
+                <th class="num">Buchungen</th>
+                <th class="num">Umsatz {current_year}</th>
+                <th class="num">Vorjahr {prev_year}</th>
+                <th class="num">Veränderung</th>
+            </tr></thead>
+            <tbody>{mgmt_rows}</tbody>
+        </table></div>
     </div>'''
 
 
@@ -2196,6 +2413,7 @@ def generate_html(data):
         ("preisliste",        "Preisliste"),
         ("apartmenthaeuser",  "Apartmenthaus"),
         ("unterkunft_detail", "Unterkunft Detail"),
+        ("planung",           "Planung"),
     ]
     tab_nav_html = "\n        ".join(
         '<div class="tab{}" data-tab="{}">{}</div>'.format(
@@ -2248,6 +2466,7 @@ def generate_html(data):
         </div>
         <div id="propDetailContent"></div>'''
         ),
+        "planung": _build_planung_tab(data.get("bookings", []), current_year),
     }
 
     tab_content_html = "\n\n".join(
