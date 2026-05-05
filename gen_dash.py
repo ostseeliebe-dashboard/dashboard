@@ -509,7 +509,7 @@ def compute_data(bookings):
                 "miete_gesamt": yd["miete_gesamt"],
                 "miete_vermittler": yd["miete_vermittler"],
                 "zusatz_vermittler": round(zk_verm, 2),
-                "provision_gesamt": round(yd["miete_vermittler"] + zk_verm, 2),
+                "provision_gesamt": round(yd["miete_vermittler"], 2),  # nur Mieteinnahmen
                 "provision_pct": yd["provision_pct"],
             }
         if prop_prov:
@@ -855,23 +855,22 @@ def generate_html(data):
     # --- Build Provisionen tab HTML ---
     prov_tab_parts = []
     for y in years:
-        # Provision KPIs for this year
+        # Provision KPIs for this year \u2013 nur Mieteinnahmen (miete_vermittler)
         k = kpis[y]
         mv_total = k["miete_vermittler"]
         mg_total = k["miete_gesamt"]
         prov_rate_avg = round(mv_total / mg_total * 100, 1) if mg_total > 0 else 0
-        # Sum Zusatzkosten Vermittler for this year
+        # Zusatzkosten Vermittler \u2013 nur zur Info, nicht in Provision eingerechnet
         zk_verm_year = zusatz_year_totals[y]["vermittler"]
-        prov_incl_zk = mv_total + zk_verm_year
 
         prov_tab_parts.append(f'''
         <div class="prop-section">
             <h4 style="color:#0066cc;border-bottom:2px solid #e0e0e0;padding-bottom:6px;font-size:18px;">{y}</h4>
             <div class="prop-detail-grid" style="margin-bottom:16px;">
-                <div class="prop-kpi"><div class="pk-label">Miete Vermittler</div><div class="pk-value">{format_euro(mv_total)}</div></div>
-                <div class="prop-kpi"><div class="pk-label">+ Zusatzk. Vermittler</div><div class="pk-value">{format_euro(zk_verm_year)}</div></div>
-                <div class="prop-kpi"><div class="pk-label">Provision gesamt</div><div class="pk-value green">{format_euro(prov_incl_zk)}</div></div>
+                <div class="prop-kpi"><div class="pk-label">Provision (Miete Verm.)</div><div class="pk-value green">{format_euro(mv_total)}</div></div>
+                <div class="prop-kpi"><div class="pk-label">Miete gesamt</div><div class="pk-value">{format_euro(mg_total)}</div></div>
                 <div class="prop-kpi"><div class="pk-label">\u00d8 Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
+                <div class="prop-kpi"><div class="pk-label">Zusatzk. Vermittler (Info)</div><div class="pk-value" style="color:#888">{format_euro(zk_verm_year)}</div></div>
             </div>
             <div style="overflow-x:auto;">
             <table class="prov-table">
@@ -939,15 +938,14 @@ def generate_html(data):
         mg_total = k["miete_gesamt"]
         prov_rate_avg = round(mv_total / mg_total * 100, 1) if mg_total > 0 else 0
         zk_verm_year = zusatz_year_totals[y]["vermittler"]
-        prov_incl_zk = mv_total + zk_verm_year
         prov_archive_parts.append(f'''
         <div class="prop-section">
             <h4 style="color:#888;border-bottom:1px solid #e0e0e0;padding-bottom:6px;font-size:16px;">{y}</h4>
             <div class="prop-detail-grid" style="margin-bottom:12px;">
-                <div class="prop-kpi"><div class="pk-label">Miete Vermittler</div><div class="pk-value">{format_euro(mv_total)}</div></div>
-                <div class="prop-kpi"><div class="pk-label">+ Zusatzk. Vermittler</div><div class="pk-value">{format_euro(zk_verm_year)}</div></div>
-                <div class="prop-kpi"><div class="pk-label">Provision gesamt</div><div class="pk-value green">{format_euro(prov_incl_zk)}</div></div>
+                <div class="prop-kpi"><div class="pk-label">Provision (Miete Verm.)</div><div class="pk-value green">{format_euro(mv_total)}</div></div>
+                <div class="prop-kpi"><div class="pk-label">Miete gesamt</div><div class="pk-value">{format_euro(mg_total)}</div></div>
                 <div class="prop-kpi"><div class="pk-label">Ø Provisionssatz</div><div class="pk-value">{format_german_number(prov_rate_avg, 1)} %</div></div>
+                <div class="prop-kpi"><div class="pk-label">Zusatzk. Vermittler (Info)</div><div class="pk-value" style="color:#888">{format_euro(zk_verm_year)}</div></div>
             </div>
         </div>''')
     archive_html = ""
