@@ -568,11 +568,14 @@ def generate_html(data):
     _current_year = _dt.datetime.now().year
     _next_year = _current_year + 1
     _all_years = data["years"]
-    # Hauptansicht: ab 2024 aufwärts (2024, 2025, 2026, 2027)
-    # Archiv: alles vor 2024 (2017-2023)
+    # Hauptansicht: ab 2024, aktuelles Jahr zuerst, dann absteigend
+    # Archiv: alles vor 2024, absteigend (neuestes zuerst)
     MAIN_FROM = 2024
-    years = sorted([y for y in _all_years if y >= MAIN_FROM])
-    years_archive = sorted([y for y in _all_years if y < MAIN_FROM])
+    years = sorted(
+        [y for y in _all_years if y >= MAIN_FROM],
+        key=lambda y: (0 if y == _current_year else 1, -y)
+    )
+    years_archive = sorted([y for y in _all_years if y < MAIN_FROM], reverse=True)
     kpis = data["kpis"]
     monthly_data = data["monthly_data"]
     monthly_count_data = data["monthly_count_data"]
@@ -703,9 +706,9 @@ def generate_html(data):
     top_zusatz = [z for z in zusatz_sorted if abs(z["total"]) > 100]
 
     kpi_html_parts = []
-    # Current year first, then remaining years descending
-    current_year = datetime.now().year
-    years_sorted = sorted(years, key=lambda y: (0 if y == current_year else 1, -y))
+    # years ist bereits: aktuelles Jahr zuerst, dann absteigend
+    current_year = _current_year
+    years_sorted = years  # Reihenfolge wird global in years festgelegt
     for y in years_sorted:
         k = kpis[y]
         zt = zusatz_year_totals[y]
@@ -851,7 +854,7 @@ def generate_html(data):
 
     # --- Build Provisionen tab HTML ---
     prov_tab_parts = []
-    for y in sorted(years, reverse=True):
+    for y in years:
         # Provision KPIs for this year
         k = kpis[y]
         mv_total = k["miete_vermittler"]
@@ -930,7 +933,7 @@ def generate_html(data):
 
     # --- Build Provisionen archive (2017-2023) as collapsible ---
     prov_archive_parts = []
-    for y in sorted(years_archive, reverse=True):
+    for y in years_archive:
         k = kpis[y]
         mv_total = k["miete_vermittler"]
         mg_total = k["miete_gesamt"]
