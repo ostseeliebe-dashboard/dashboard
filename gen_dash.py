@@ -2062,9 +2062,9 @@ def generate_html(data):
         def _season_th(s):
             dates = SEASON_DATES.get(s, "")
             if dates:
-                return (f'<th class="num" title="{dates}" style="cursor:help;">'
-                        f'{s}<br><small style="color:#999;font-weight:400">{dates}</small></th>')
-            return f'<th class="num">{s}</th>'
+                return (f'<th class="num" title="{dates}" style="cursor:help;color:#fff;">'
+                        f'{s}<br><small style="color:rgba(255,255,255,0.75);font-weight:400">{dates}</small></th>')
+            return f'<th class="num" style="color:#fff;">{s}</th>'
 
         season_headers = "".join(_season_th(s) for s in all_seasons)
         pl_header = f'''
