@@ -1491,11 +1491,20 @@ def generate_html(data):
         # Verf\u00fcgbare N\u00e4chte = Anzahl Jahre \u00d7 365 (ohne Schaltjahre-Korrektur)
         verfuegbar = len([y for y in years if y <= current_year]) * 365
         auslastung = round(total_naechte / verfuegbar * 100, 1) if verfuegbar > 0 else 0
+        # J\u00e4hrliche N\u00e4chte und Auslastung
+        per_year_naechte = {y: pd["years"].get(y, {}).get("naechte", 0) for y in years}
+        per_year_asl = {
+            y: round(pd["years"].get(y, {}).get("naechte", 0) / 365 * 100, 1)
+            if y <= current_year else 0
+            for y in years
+        }
         ranking_data.append({
             "name": pname,
             "ort": pd["ort"],
             "total": total_umsatz,
             "per_year": {y: pd["years"].get(y, {}).get("reisepreis", 0) for y in years},
+            "per_year_naechte": per_year_naechte,
+            "per_year_asl": per_year_asl,
             "buchungen": total_buchungen,
             "naechte": total_naechte,
             "auslastung": auslastung,
@@ -1503,19 +1512,37 @@ def generate_html(data):
     ranking_data.sort(key=lambda x: -x["total"])
 
     max_umsatz = ranking_data[0]["total"] if ranking_data else 1
-    year_headers_r = "".join(f'<th class="num">{y}</th>' for y in years)
+
+    # Spaltenk\u00f6pfe: Gruppe pro Jahr (Umsatz | N\u00e4chte | Auslastung), dann Gesamt
+    year_header_top = "".join(
+        f'<th class="num" colspan="3" style="text-align:center;border-bottom:1px solid #ddd;background:#f0f4fa">{y}</th>'
+        for y in years
+    )
+    year_header_sub = "".join(
+        '<th class="num" style="font-size:11px;color:#666;font-weight:400">Umsatz</th>'
+        '<th class="num" style="font-size:11px;color:#666;font-weight:400">N\u00e4chte</th>'
+        '<th class="num" style="font-size:11px;color:#666;font-weight:400">Ausl.</th>'
+        for _ in years
+    )
+
     ranking_rows = ""
     MEDALS = {1: "&#127949;", 2: "&#127950;", 3: "&#127951;"}
     for i, item in enumerate(ranking_data, 1):
         bar_pct = round(item["total"] / max_umsatz * 100)
         medal = MEDALS.get(i, f"<span style='color:#999;font-size:12px'>#{i}</span>")
         _dash = "<span style=\"color:#ccc\">&#8211;</span>"
-        year_cells = "".join(
-            '<td class="num">' + (format_euro(item["per_year"].get(y, 0)) if item["per_year"].get(y, 0) > 0 else _dash) + '</td>'
-            for y in years
-        )
+        year_cells = ""
+        for y in years:
+            umsatz_y = item["per_year"].get(y, 0)
+            naechte_y = item["per_year_naechte"].get(y, 0)
+            asl_y = item["per_year_asl"].get(y, 0)
+            asl_col = "#2d7a2d" if asl_y >= 60 else ("#e67e00" if asl_y >= 30 else "#cc3333")
+            year_cells += (
+                f'<td class="num" style="font-size:12px">' + (format_euro(umsatz_y) if umsatz_y > 0 else _dash) + '</td>'
+                f'<td class="num" style="font-size:12px;color:#555">' + (str(int(naechte_y)) if naechte_y > 0 else _dash) + '</td>'
+                f'<td class="num" style="font-size:12px;color:{asl_col};font-weight:600">' + (f'{asl_y:.1f}\u00a0%' if naechte_y > 0 else _dash) + '</td>'
+            )
         row_style = " style='background:#fffef0'" if i <= 3 else ""
-        # Auslastungs-Farbe
         asl = item["auslastung"]
         asl_color = "#2d7a2d" if asl >= 60 else ("#e67e00" if asl >= 30 else "#cc3333")
         ranking_rows += f'''
@@ -1538,19 +1565,22 @@ def generate_html(data):
         <h3>&#127942; Umsatz-Ranking nach Unterkunft</h3>
         <p style="color:#666;font-size:13px;margin-bottom:20px;">
             Gesamtumsatz (Reisepreis) {yr_range}. Platz\u00a01\u00a0=\u00a0st\u00e4rkste Unterkunft &mdash; alle {len(ranking_data)} Unterk\u00fcnfte mit Buchungen im Zeitraum.
-            Auslastung = gebuchte N\u00e4chte \u00f7 verf\u00fcgbare Tage im Zeitraum.
+            Auslastung = gebuchte N\u00e4chte \u00f7 365 Tage je Jahr.
         </p>
         <div style="overflow-x:auto;">
         <table class="prov-table">
             <thead>
                 <tr>
-                    <th style="width:52px;text-align:center">Rang</th>
-                    <th>Unterkunft</th>
-                    <th>Ort</th>
-                    {year_headers_r}
-                    <th class="num">Gesamt</th>
-                    <th class="num">N\u00e4chte</th>
-                    <th class="num">Auslastung</th>
+                    <th rowspan="2" style="width:52px;text-align:center">Rang</th>
+                    <th rowspan="2">Unterkunft</th>
+                    <th rowspan="2">Ort</th>
+                    {year_header_top}
+                    <th rowspan="2" class="num">Gesamt</th>
+                    <th rowspan="2" class="num">N\u00e4chte</th>
+                    <th rowspan="2" class="num">Auslastung</th>
+                </tr>
+                <tr>
+                    {year_header_sub}
                 </tr>
             </thead>
             <tbody>
