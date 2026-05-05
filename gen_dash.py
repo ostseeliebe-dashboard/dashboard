@@ -1741,9 +1741,10 @@ def generate_html(data):
             "naechte": total_naechte,
             "auslastung": auslastung,
         })
-    ranking_data.sort(key=lambda x: -x["total"])
+    # Sortierung nach aktuellem Jahr (höchster Umsatz zuerst), Fallback auf Gesamtumsatz
+    ranking_data.sort(key=lambda x: -(x["per_year"].get(current_year, 0) or x["total"]))
 
-    max_umsatz = ranking_data[0]["total"] if ranking_data else 1
+    max_umsatz = max((x["per_year"].get(current_year, 0) for x in ranking_data), default=1) or 1
 
     # Spaltenk\u00f6pfe: Gruppe pro Jahr (Umsatz | N\u00e4chte | Auslastung), dann Gesamt
     year_header_top = "".join(
@@ -1760,7 +1761,8 @@ def generate_html(data):
     ranking_rows = ""
     MEDALS = {1: "&#127949;", 2: "&#127950;", 3: "&#127951;"}
     for i, item in enumerate(ranking_data, 1):
-        bar_pct = round(item["total"] / max_umsatz * 100)
+        cur_umsatz = item["per_year"].get(current_year, 0)
+        bar_pct = round(cur_umsatz / max_umsatz * 100) if cur_umsatz else 0
         medal = MEDALS.get(i, f"<span style='color:#999;font-size:12px'>#{i}</span>")
         _dash = "<span style=\"color:#ccc\">&#8211;</span>"
         year_cells = ""
@@ -1769,10 +1771,13 @@ def generate_html(data):
             naechte_y = item["per_year_naechte"].get(y, 0)
             asl_y = item["per_year_asl"].get(y, 0)
             asl_col = "#2d7a2d" if asl_y >= 60 else ("#e67e00" if asl_y >= 30 else "#cc3333")
+            # Aktuelles Jahr farblich hervorheben
+            is_cur = (y == current_year)
+            cell_style = "font-size:12px;background:#f0f7ff;font-weight:600" if is_cur else "font-size:12px"
             year_cells += (
-                f'<td class="num" style="font-size:12px">' + (format_euro(umsatz_y) if umsatz_y > 0 else _dash) + '</td>'
-                f'<td class="num" style="font-size:12px;color:#555">' + (str(int(naechte_y)) if naechte_y > 0 else _dash) + '</td>'
-                f'<td class="num" style="font-size:12px;color:{asl_col};font-weight:600">' + (f'{asl_y:.1f}\u00a0%' if naechte_y > 0 else _dash) + '</td>'
+                f'<td class="num" style="{cell_style}">' + (format_euro(umsatz_y) if umsatz_y > 0 else _dash) + '</td>'
+                f'<td class="num" style="font-size:12px;color:#555{";background:#f0f7ff" if is_cur else ""}">' + (str(int(naechte_y)) if naechte_y > 0 else _dash) + '</td>'
+                f'<td class="num" style="font-size:12px;color:{asl_col};font-weight:600{";background:#f0f7ff" if is_cur else ""}">' + (f'{asl_y:.1f}\u00a0%' if naechte_y > 0 else _dash) + '</td>'
             )
         row_style = " style='background:#fffef0'" if i <= 3 else ""
         asl = item["auslastung"]
@@ -1796,7 +1801,7 @@ def generate_html(data):
     <div class="chart-container">
         <h3>&#127942; Umsatz-Ranking nach Unterkunft</h3>
         <p style="color:#666;font-size:13px;margin-bottom:20px;">
-            Gesamtumsatz (Reisepreis) {yr_range}. Platz\u00a01\u00a0=\u00a0st\u00e4rkste Unterkunft &mdash; alle {len(ranking_data)} Unterk\u00fcnfte mit Buchungen im Zeitraum.
+            Sortiert nach Umsatz (Reisepreis) {current_year} &mdash; h\u00f6chster Umsatz zuerst. Alle {len(ranking_data)} Unterk\u00fcnfte mit Buchungen im Zeitraum {yr_range}.
             Auslastung = gebuchte N\u00e4chte \u00f7 365 Tage je Jahr.
         </p>
         <div style="overflow-x:auto;">
