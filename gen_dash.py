@@ -1659,7 +1659,7 @@ def generate_html(data):
     # --- Build property data JSON for embedded JS ---
     prop_json_data = {}
     for pname, pdata in property_data.items():
-        pj = {"ort": pdata["ort"], "years": {}}
+        pj = {"ort": pdata["ort"], "provision_pct_excel": pdata.get("provision_pct_excel", ""), "eigentuemer": pdata.get("eigentuemer", ""), "years": {}}
         for y, yd in pdata["years"].items():
             pj["years"][y] = {
                 "buchungen": yd["buchungen"],
@@ -2985,7 +2985,10 @@ def generate_html(data):
             }}
             var p = propData[name];
             var html = '<h3 style="margin:20px 0 6px;font-size:22px;color:#0066cc;">' + name + '</h3>';
-            html += '<p style="color:#666;margin-bottom:20px;">Ort: ' + p.ort + '</p>';
+            html += '<p style="color:#666;margin-bottom:4px;">Ort: ' + (p.ort || '–') + '</p>';
+            if (p.eigentuemer) html += '<p style="color:#666;margin-bottom:4px;">Eigentümer: ' + p.eigentuemer + '</p>';
+            if (p.provision_pct_excel) html += '<p style="color:#0066cc;font-weight:600;margin-bottom:20px;">Prov.satz laut Vertrag: ' + p.provision_pct_excel + '</p>';
+            else html += '<div style="margin-bottom:20px;"></div>';
 
             allYears.forEach(function(y) {{
                 var yd = p.years[y];
