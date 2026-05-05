@@ -256,7 +256,6 @@ def read_bookings(csv_path):
                 "vorgang": row[7].strip(),
                 "vertriebskanal": row[8].strip(),
                 "reisepreis": parse_german_number(row[11]),
-                "provision_betrag": parse_german_number(row[13]) if len(row) > 13 else 0.0,
                 "provision_pct": row[13].strip() if len(row) > 13 else "",
                 "miete_gesamt": parse_german_number(row[14]),
                 "miete_vermittler": parse_german_number(row[15]),
@@ -370,10 +369,15 @@ def compute_data(bookings):
         for b in yb:
             raw[b["vertriebskanal"]] += 1
 
-        # Provision pro Kanal summieren (nur Portalbuchungen)
+        # Portalprovision pro Kanal: Reisepreis × Provision% (z.B. "17%" → 0.17)
         prov_by_channel = defaultdict(float)
         for b in yb:
-            prov_by_channel[b["vertriebskanal"]] += b["provision_betrag"]
+            raw_pct = b["provision_pct"].replace("%", "").replace(",", ".").strip()
+            try:
+                pct = float(raw_pct) / 100.0
+            except (ValueError, AttributeError):
+                pct = 0.0
+            prov_by_channel[b["vertriebskanal"]] += b["reisepreis"] * pct
 
         # Classify each channel
         ostl_sub = []
