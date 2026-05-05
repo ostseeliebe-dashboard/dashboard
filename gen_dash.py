@@ -792,6 +792,49 @@ def generate_html(data):
         </div>''')
     kpi_html = "\n".join(kpi_html_parts)
 
+    # --- Archiv-Zusammenfassung für Übersicht (2017–2023) ---
+    archive_kpi_rows = ""
+    for y in years_archive:
+        k = kpis.get(y, {})
+        if not k or k.get("buchungen", 0) == 0:
+            continue
+        archive_kpi_rows += f'''
+        <tr>
+            <td><strong>{y}</strong></td>
+            <td class="num">{format_german_number(k.get("buchungen", 0), 0)}</td>
+            <td class="num">{format_german_number(k.get("naechte", 0), 0)}</td>
+            <td class="num">{format_euro(k.get("reisepreis", 0))}</td>
+            <td class="num">{format_euro(k.get("miete_gesamt", 0))}</td>
+            <td class="num">{format_euro(k.get("miete_eigentuemer", 0))}</td>
+        </tr>'''
+
+    if archive_kpi_rows:
+        archive_min = min(y for y in years_archive if kpis.get(y, {}).get("buchungen", 0) > 0)
+        archive_max = max(y for y in years_archive if kpis.get(y, {}).get("buchungen", 0) > 0)
+        kpi_html += f'''
+    <div style="margin-top:24px;">
+        <div onclick="var c=document.getElementById('archiv-kpi');var a=document.getElementById('archiv-kpi-arrow');c.style.display=c.style.display==='none'?'block':'none';a.textContent=c.style.display==='none'?'▶':'▼';"
+             style="cursor:pointer;background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px 18px;display:flex;align-items:center;gap:12px;user-select:none;">
+            <span id="archiv-kpi-arrow" style="font-size:16px;color:#888;">▶</span>
+            <span style="font-weight:600;color:#666;">Archiv {archive_min}–{archive_max}</span>
+        </div>
+        <div id="archiv-kpi" style="display:none;margin-top:8px;overflow-x:auto;">
+            <table class="prov-table">
+                <thead>
+                    <tr>
+                        <th>Jahr</th>
+                        <th class="num">Buchungen</th>
+                        <th class="num">Nächte</th>
+                        <th class="num">Reisepreis</th>
+                        <th class="num">Miete gesamt</th>
+                        <th class="num">Miete Eigentümer</th>
+                    </tr>
+                </thead>
+                <tbody>{archive_kpi_rows}</tbody>
+            </table>
+        </div>
+    </div>'''
+
     # --- Build comparison table HTML ---
     table_header = "<tr><th>Monat</th>" + "".join(f"<th>{y}</th>" for y in years) + "</tr>"
     table_rows = []
