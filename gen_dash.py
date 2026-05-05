@@ -2412,7 +2412,7 @@ def generate_html(data):
         }}
         .prov-table th {{
             background: var(--color-primary);
-            color: white;
+            color: #fff !important;
             font-weight: 600;
             padding: 10px 12px;
             text-align: left;
