@@ -1741,8 +1741,8 @@ def generate_html(data):
             "naechte": total_naechte,
             "auslastung": auslastung,
         })
-    # Sortierung nach aktuellem Jahr (höchster Umsatz zuerst), Fallback auf Gesamtumsatz
-    ranking_data.sort(key=lambda x: -(x["per_year"].get(current_year, 0) or x["total"]))
+    # Sortierung ausschließlich nach aktuellem Jahr (höchster Umsatz zuerst)
+    ranking_data.sort(key=lambda x: -x["per_year"].get(current_year, 0))
 
     max_umsatz = max((x["per_year"].get(current_year, 0) for x in ranking_data), default=1) or 1
 
