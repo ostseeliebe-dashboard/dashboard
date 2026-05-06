@@ -855,6 +855,102 @@ def _build_orte_tab(orte, years, current_year):
     </div>'''
 
 
+def _build_buchungsprognose(bookings, current_year):
+    """Buchungsprognose: Monats-Umsatz aktuelles Jahr vs. Vorjahr."""
+    import datetime as _dt
+    from collections import defaultdict
+
+    MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
+              "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
+    prev_year = current_year - 1
+    today = _dt.date.today()
+
+    # Umsatz pro Monat für aktuelles Jahr und Vorjahr
+    umsatz = {current_year: defaultdict(float), prev_year: defaultdict(float)}
+    naechte = {current_year: defaultdict(float), prev_year: defaultdict(float)}
+    for b in bookings:
+        y = b["anreise"].year
+        m = b["anreise"].month
+        if y in umsatz:
+            umsatz[y][m] += b["reisepreis"]
+            naechte[y][m] += b["naechte"]
+
+    rows = ""
+    total_cur = total_prev = 0.0
+    for m in range(1, 13):
+        cur = umsatz[current_year][m]
+        prv = umsatz[prev_year][m]
+        total_cur += cur
+        total_prev += prv
+        diff = cur - prv
+        diff_pct = (diff / prv * 100) if prv else 0
+        is_future = (current_year == today.year and m > today.month)
+        is_current = (current_year == today.year and m == today.month)
+
+        month_label = MONATE[m - 1]
+        if is_current:
+            month_label = f"<b>{month_label} ◀</b>"
+        elif is_future:
+            month_label = f"<span style='color:#999'>{month_label}</span>"
+
+        diff_color = "#2d7a2d" if diff >= 0 else "#cc3333"
+        diff_str = f"+{diff:,.0f} €" if diff >= 0 else f"{diff:,.0f} €"
+        diff_str = diff_str.replace(",", ".")
+        pct_str = f"({diff_pct:+.1f} %)" if prv else ""
+
+        cur_str = f"{cur:,.0f} €".replace(",", ".") if cur else "–"
+        prv_str = f"{prv:,.0f} €".replace(",", ".") if prv else "–"
+
+        row_bg = "background:#f0f7ff" if is_current else ("background:#fafafa" if is_future else "")
+        rows += (
+            f"<tr style='{row_bg}'>"
+            f"<td style='font-weight:500'>{month_label}</td>"
+            f"<td class='num'>{cur_str}</td>"
+            f"<td class='num' style='color:#888'>{prv_str}</td>"
+            f"<td class='num' style='color:{diff_color};font-weight:600'>"
+            f"{diff_str} <small>{pct_str}</small></td>"
+            f"<td class='num' style='color:#666'>{naechte[current_year][m]:.0f}</td>"
+            f"</tr>"
+        )
+
+    # Gesamtzeile
+    total_diff = total_cur - total_prev
+    total_color = "#2d7a2d" if total_diff >= 0 else "#cc3333"
+    total_diff_str = (f"+{total_diff:,.0f} €" if total_diff >= 0 else f"{total_diff:,.0f} €").replace(",", ".")
+    total_pct = f"({total_diff / total_prev * 100:+.1f} %)" if total_prev else ""
+    rows += (
+        f"<tr style='background:#e8f0fe;font-weight:700;border-top:2px solid #ccc'>"
+        f"<td>Gesamt</td>"
+        f"<td class='num'>{total_cur:,.0f} €</td>"
+        f"<td class='num' style='color:#888'>{total_prev:,.0f} €</td>"
+        f"<td class='num' style='color:{total_color}'>{total_diff_str} <small>{total_pct}</small></td>"
+        f"<td class='num'></td>"
+        f"</tr>"
+    )
+    rows = rows.replace(",", ".", 9999)
+
+    return f'''
+    <div class="chart-container" style="margin-top:24px">
+        <h3>&#128200; Buchungsprognose {current_year} vs. {prev_year}</h3>
+        <p style="color:#666;font-size:13px;margin-bottom:12px;">
+            Reisepreis gebuchter Buchungen pro Monat (Anreisedatum) &nbsp;|&nbsp;
+            ◀ = aktueller Monat &nbsp;|&nbsp;
+            <span style="color:#999">Grau</span> = noch zukünftig (Stand: {today.strftime("%d.%m.%Y")})
+        </p>
+        <div style="overflow-x:auto">
+        <table class="prov-table">
+            <thead><tr>
+                <th>Monat</th>
+                <th class="num">{current_year} (gebucht)</th>
+                <th class="num">{prev_year} (Ist)</th>
+                <th class="num">Differenz</th>
+                <th class="num">Nächte {current_year}</th>
+            </tr></thead>
+            <tbody>{rows}</tbody>
+        </table></div>
+    </div>'''
+
+
 def _build_auslastungsampel(property_data, current_year):
     """Auslastungsampel: Übersicht aller Objekte mit Ampelfarbe für aktuelles Jahr."""
     rows = []
@@ -2530,7 +2626,8 @@ def generate_html(data):
     tab_contents = {
         "uebersicht": (
             bestand_html + "\n" + kpi_html + "\n" +
-            _build_auslastungsampel(property_data, current_year)
+            _build_auslastungsampel(property_data, current_year) + "\n" +
+            _build_buchungsprognose(data.get("bookings", []), current_year)
         ),
         "jahresvergleich": (
             '''<div class="chart-container">
@@ -3347,6 +3444,12 @@ def generate_property_html(prop_name, pdata, years):
 def main():
     csv_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_CSV
     out_path = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_OUT
+
+    # Wenn relativer Pfad, relativ zum Skript-Verzeichnis auflösen
+    if not os.path.isabs(csv_path):
+        csv_path = os.path.join(SCRIPT_DIR, csv_path)
+    if not os.path.isabs(out_path):
+        out_path = os.path.join(SCRIPT_DIR, out_path)
 
     if not os.path.exists(csv_path):
         print(f"Fehler: CSV-Datei nicht gefunden: {csv_path}")
