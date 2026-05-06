@@ -994,8 +994,16 @@ def _build_auslastungsampel(property_data, current_year):
 
     return f'''
     <div class="chart-container">
-        <h3>&#128993; Auslastungsampel {current_year}</h3>
-        <p style="color:#666;font-size:13px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none"
+             onclick="toggleAmpel()">
+            <h3 style="margin:0">&#128993; Auslastungsampel {current_year}
+                &nbsp;<small style="color:#666;font-size:13px;font-weight:normal">
+                🟢 {n_gruen} &nbsp;🟡 {n_gelb} &nbsp;🔴 {n_rot} Objekte</small>
+            </h3>
+            <span id="ampel-toggle-icon" style="font-size:20px;color:#0066cc">▲</span>
+        </div>
+        <div id="ampel-body">
+        <p style="color:#666;font-size:13px;margin:10px 0 12px;">
             🟢 &ge;60 % ({n_gruen} Objekte) &nbsp;|&nbsp;
             🟡 35–59 % ({n_gelb} Objekte) &nbsp;|&nbsp;
             🔴 &lt;35 % ({n_rot} Objekte) &nbsp;|&nbsp;
@@ -1015,7 +1023,21 @@ def _build_auslastungsampel(property_data, current_year):
             <tbody>{table_rows if table_rows else
                 "<tr><td colspan='7' style='text-align:center;color:#999'>Keine Daten</td></tr>"}</tbody>
         </table></div>
-    </div>'''
+        </div>
+    </div>
+    <script>
+    function toggleAmpel() {{
+        var body = document.getElementById("ampel-body");
+        var icon = document.getElementById("ampel-toggle-icon");
+        if (body.style.display === "none") {{
+            body.style.display = "";
+            icon.textContent = "▲";
+        }} else {{
+            body.style.display = "none";
+            icon.textContent = "▼";
+        }}
+    }}
+    </script>'''
 
 
 def _build_planung_tab(bookings, current_year):
