@@ -1037,6 +1037,17 @@ def _build_auslastungsampel(property_data, current_year):
             icon.textContent = "▼";
         }}
     }}
+    function toggleYear(y) {{
+        var body = document.getElementById("year-body-" + y);
+        var icon = document.getElementById("icon-" + y);
+        if (body.style.display === "none") {{
+            body.style.display = "";
+            icon.textContent = "▲";
+        }} else {{
+            body.style.display = "none";
+            icon.textContent = "▼";
+        }}
+    }}
     </script>'''
 
 
@@ -1464,9 +1475,17 @@ def generate_html(data):
             <td class="zk-num zk-sub"><strong>{format_euro(zt["eigentuemer"])}</strong></td>
         </tr>'''
 
+        is_cur = (y == current_year)
+        body_display = "" if is_cur else "display:none"
+        icon = "\u25b2" if is_cur else "\u25bc"
         kpi_html_parts.append(f'''
         <div class="year-section">
-            <h3 class="year-title">{y}</h3>
+            <h3 class="year-title" onclick="toggleYear({y})"
+                style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between">
+                <span>{y}</span>
+                <span id="icon-{y}" style="font-size:16px;color:#0066cc;font-weight:normal">{icon}</span>
+            </h3>
+            <div id="year-body-{y}" style="{body_display}">
             <div class="kpi-grid">
                 <div class="kpi-card">
                     <div class="kpi-label">Buchungen</div>
@@ -1504,6 +1523,7 @@ def generate_html(data):
                         {zusatz_total_row}
                     </tbody>
                 </table>
+            </div>
             </div>
         </div>''')
     kpi_html = "\n".join(kpi_html_parts)
